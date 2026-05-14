@@ -16,7 +16,7 @@ contract FidelityCardTest is Test {
         vm.expectEmit(true, true, true, true);
         emit FidelityCard.Mint(address(2), 100);
         fidelityCard.mint(address(2), 100);
-        
+
         assertEq(fidelityCard.getBalance(address(2)), 100);
         assertEq(fidelityCard.getTotalSupply(), 1);
         assertEq(fidelityCard.getTokenId(address(2)), 1);
@@ -110,7 +110,7 @@ contract FidelityCardTest is Test {
     function test_TokenId() public {
         assertEq(fidelityCard.getTokenId(address(2)), 0);
     }
-    
+
     function test_TokenURI() public {
         assertEq(fidelityCard.tokenURI(), "https://test.com");
     }
@@ -118,6 +118,4 @@ contract FidelityCardTest is Test {
     function test_GetBalance() public {
         assertEq(fidelityCard.getBalance(address(2)), 0);
     }
-    
-    
 }

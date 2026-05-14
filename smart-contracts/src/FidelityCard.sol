@@ -3,11 +3,11 @@ pragma solidity ^0.8.13;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract FidelityCard is Ownable{
+contract FidelityCard is Ownable {
     string private _name;
     string private _symbol;
     string private _baseURI;
-    
+
     /**
      * @notice Constructor
      * @param _address The address of the owner of the fidelity card contract
@@ -15,7 +15,7 @@ contract FidelityCard is Ownable{
      * @param symbol_ The symbol of the fidelity card (symbol of the association)
      * @param baseURI The base URI of the fidelity card (base URI of the association image)
      */
-    constructor(address _address,string memory name_, string memory symbol_, string memory baseURI) Ownable(_address){
+    constructor(address _address, string memory name_, string memory symbol_, string memory baseURI) Ownable(_address) {
         _name = name_;
         _symbol = symbol_;
         _baseURI = baseURI;
@@ -33,7 +33,7 @@ contract FidelityCard is Ownable{
     }
 
     error NotEnoughPoints(uint256 _points);
-    
+
     event Mint(address indexed _address, uint256 _points);
     event Burn(address indexed _address, uint256 _points);
     event AddPoints(address indexed _address, uint256 _points);
@@ -50,7 +50,7 @@ contract FidelityCard is Ownable{
     function name() public view returns (string memory) {
         return _name;
     }
-    
+
     function symbol() public view returns (string memory) {
         return _symbol;
     }
