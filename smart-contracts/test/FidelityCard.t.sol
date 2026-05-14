@@ -18,9 +18,9 @@ contract FidelityCardTest is Test {
         fidelityCard.mint(address(2), 100);
 
         assertEq(fidelityCard.getBalance(address(2)), 100);
-        assertEq(fidelityCard.getTotalSupply(), 1);
+        assertEq(fidelityCard.totalSupply(), 1);
         assertEq(fidelityCard.getTokenId(address(2)), 1);
-        assertEq(fidelityCard.tokenURI(), "https://test.com");
+        assertEq(fidelityCard.tokenURI(1), "https://test.com");
     }
 
     function test_AddPoints() public {
@@ -35,9 +35,9 @@ contract FidelityCardTest is Test {
         fidelityCard.mint(address(2), 100);
 
         assertEq(fidelityCard.getBalance(address(2)), 200);
-        assertEq(fidelityCard.getTotalSupply(), 1);
+        assertEq(fidelityCard.totalSupply(), 1);
         assertEq(fidelityCard.getTokenId(address(2)), 1);
-        assertEq(fidelityCard.tokenURI(), "https://test.com");
+        assertEq(fidelityCard.tokenURI(1), "https://test.com");
     }
 
     function test_Burn_NotEnoughPoints() public {
@@ -46,9 +46,9 @@ contract FidelityCardTest is Test {
         fidelityCard.burn(address(2), 100);
 
         assertEq(fidelityCard.getBalance(address(2)), 0);
-        assertEq(fidelityCard.getTotalSupply(), 0);
+        assertEq(fidelityCard.totalSupply(), 0);
         assertEq(fidelityCard.getTokenId(address(2)), 0);
-        assertEq(fidelityCard.tokenURI(), "https://test.com");
+        assertEq(fidelityCard.tokenURI(1), "https://test.com");
     }
 
     function test_Burn() public {
@@ -63,9 +63,9 @@ contract FidelityCardTest is Test {
         fidelityCard.burn(address(2), 100);
 
         assertEq(fidelityCard.getBalance(address(2)), 0);
-        assertEq(fidelityCard.getTotalSupply(), 1);
+        assertEq(fidelityCard.totalSupply(), 1);
         assertEq(fidelityCard.getTokenId(address(2)), 1);
-        assertEq(fidelityCard.tokenURI(), "https://test.com");
+        assertEq(fidelityCard.tokenURI(1), "https://test.com");
     }
 
     function test_ChangeURI() public {
@@ -74,7 +74,7 @@ contract FidelityCardTest is Test {
         emit FidelityCard.ChangeURI("https://test.com/new");
         fidelityCard.changeURI("https://test.com/new");
 
-        assertEq(fidelityCard.tokenURI(), "https://test.com/new");
+        assertEq(fidelityCard.tokenURI(1), "https://test.com/new");
     }
 
     function test_ChangeCardType() public {
@@ -104,7 +104,7 @@ contract FidelityCardTest is Test {
     }
 
     function test_TotalSupply() public {
-        assertEq(fidelityCard.getTotalSupply(), 0);
+        assertEq(fidelityCard.totalSupply(), 0);
     }
 
     function test_TokenId() public {
@@ -112,10 +112,17 @@ contract FidelityCardTest is Test {
     }
 
     function test_TokenURI() public {
-        assertEq(fidelityCard.tokenURI(), "https://test.com");
+        assertEq(fidelityCard.tokenURI(1), "https://test.com");
     }
 
     function test_GetBalance() public {
         assertEq(fidelityCard.getBalance(address(2)), 0);
+    }
+
+    function test_OwnerOf() public {
+        vm.prank(address(1));
+        fidelityCard.mint(address(2), 100);
+
+        assertEq(fidelityCard.ownerOf(1), address(2));
     }
 }

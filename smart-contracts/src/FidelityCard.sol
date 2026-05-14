@@ -41,11 +41,12 @@ contract FidelityCard is Ownable {
     event ChangeCardType(uint256 indexed _tokenId, CardType _typeCard);
 
     mapping(address _address => uint256 _tokenId) private _tokenId;
+    mapping(uint256 _tokenId => address _address) private _ownerOf;
     mapping(uint256 tokenId => uint256 points) private _points;
     mapping(uint256 tokenId => CardType typeCard) private _typeCard;
 
     uint256 tokenIdCounter = 1;
-    uint256 public totalSupply;
+    uint256 private _totalSupply;
 
     function name() public view returns (string memory) {
         return _name;
@@ -66,10 +67,11 @@ contract FidelityCard is Ownable {
             emit AddPoints(_address, points);
         } else {
             _tokenId[_address] = tokenIdCounter;
+            _ownerOf[tokenIdCounter] = _address;
             _points[tokenIdCounter] = points;
             _typeCard[tokenIdCounter] = CardType.Wood;
             tokenIdCounter++;
-            totalSupply++;
+            _totalSupply++;
             emit Mint(_address, points);
         }
     }
@@ -107,7 +109,7 @@ contract FidelityCard is Ownable {
      * @notice Get the URI of the fidelity card
      * @return The URI of the fidelity card
      */
-    function tokenURI() public view returns (string memory) {
+    function tokenURI(uint256) public view returns (string memory) {
         return _baseURI;
     }
 
@@ -124,8 +126,8 @@ contract FidelityCard is Ownable {
      * @notice Get the total supply of the fidelity card
      * @return The total supply of the fidelity card
      */
-    function getTotalSupply() public view returns (uint256) {
-        return totalSupply;
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
     }
 
     /**
@@ -145,5 +147,14 @@ contract FidelityCard is Ownable {
     function changeCardType(address _address, CardType typeCard) public onlyOwner {
         _typeCard[_tokenId[_address]] = typeCard;
         emit ChangeCardType(_tokenId[_address], typeCard);
+    }
+
+    /**
+     * @notice Get the owner of the fidelity card
+     * @param tokenId The token ID of the fidelity card
+     * @return The owner of the fidelity card
+     */
+    function ownerOf(uint256 tokenId) external view returns (address) {
+        return _ownerOf[tokenId];
     }
 }
