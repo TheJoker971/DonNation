@@ -4,21 +4,32 @@ pragma solidity ^0.8.13;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract FidelityCard is Ownable{
-    string public name;
-    string public symbol;
-    string public baseURI;
+    string private _name;
+    string private _symbol;
+    string private _baseURI;
     
     /**
      * @notice Constructor
      * @param _address The address of the owner of the fidelity card contract
-     * @param _name The name of the fidelity card (name of the association)
-     * @param _symbol The symbol of the fidelity card (symbol of the association)
-     * @param _baseURI The base URI of the fidelity card (base URI of the association image)
+     * @param name_ The name of the fidelity card (name of the association)
+     * @param symbol_ The symbol of the fidelity card (symbol of the association)
+     * @param baseURI The base URI of the fidelity card (base URI of the association image)
      */
-    constructor(address _address,string memory _name, string memory _symbol, string memory _baseURI) Ownable(_address){
-        name = _name;
-        symbol = _symbol;
-        baseURI = _baseURI;
+    constructor(address _address,string memory name_, string memory symbol_, string memory baseURI) Ownable(_address){
+        _name = name_;
+        _symbol = symbol_;
+        _baseURI = baseURI;
+    }
+
+    enum CardType {
+        Wood,
+        Metal,
+        Bronze,
+        Silver,
+        Gold,
+        Platinum,
+        Diamond,
+        Emerald
     }
 
     error NotEnoughPoints(uint256 _points);
@@ -26,30 +37,40 @@ contract FidelityCard is Ownable{
     event Mint(address indexed _address, uint256 _points);
     event Burn(address indexed _address, uint256 _points);
     event AddPoints(address indexed _address, uint256 _points);
-    event ChangeURI(address indexed _address, string _uri);
+    event ChangeURI(string _uri);
+    event ChangeCardType(uint256 indexed _tokenId, CardType _typeCard);
 
-    mapping(address _address => uint256 _tokenId) private tokenId;
-    mapping(uint256 tokenId => uint256 points) private points;
-    mapping(uint256 tokenId => string uri) private uri;
+    mapping(address _address => uint256 _tokenId) private _tokenId;
+    mapping(uint256 tokenId => uint256 points) private _points;
+    mapping(uint256 tokenId => CardType typeCard) private _typeCard;
 
     uint256 tokenIdCounter = 1;
     uint256 public totalSupply;
 
+    function name() public view returns (string memory) {
+        return _name;
+    }
+    
+    function symbol() public view returns (string memory) {
+        return _symbol;
+    }
+
     /**
      * @notice Mint a new fidelity card
      * @param _address The address of the owner of the fidelity card
-     * @param _points The number of points to mint
+     * @param points The number of points to mint
      */
-    function mint(address _address, uint256 _points) public onlyOwner {
-        if (tokenId[_address] != 0) {
-            points[tokenId[_address]] += _points;
-            emit AddPoints(_address, _points);
+    function mint(address _address, uint256 points) public onlyOwner {
+        if (_tokenId[_address] != 0) {
+            _points[_tokenId[_address]] += points;
+            emit AddPoints(_address, points);
         } else {
-            tokenId[_address] = tokenIdCounter;
-            points[tokenIdCounter] = _points;
+            _tokenId[_address] = tokenIdCounter;
+            _points[tokenIdCounter] = points;
+            _typeCard[tokenIdCounter] = CardType.Wood;
             tokenIdCounter++;
             totalSupply++;
-            emit Mint(_address, 0);
+            emit Mint(_address, points);
         }
     }
 
@@ -59,46 +80,35 @@ contract FidelityCard is Ownable{
      * @return The balance of the fidelity card
      */
     function getBalance(address _address) public view returns (uint256) {
-        return points[tokenId[_address]];
-    }
-
-    /**
-     * @notice Get the points of the fidelity card
-     * @param _tokenId The token ID of the fidelity card
-     * @return The points of the fidelity card
-     */
-    function getPoints(uint256 _tokenId) public view returns (uint256) {
-        return points[_tokenId];
+        return _points[_tokenId[_address]];
     }
 
     /**
      * @notice Burn points from the fidelity card
      * @param _address The address of the owner of the fidelity card
-     * @param _points The number of points to burn
+     * @param points The number of points to burn
      */
-    function burn(address _address, uint256 _points) public onlyOwner {
-        require(points[tokenId[_address]] >= _points, NotEnoughPoints(_points));
-        points[tokenId[_address]] -= _points;
-        emit Burn(_address, _points);
+    function burn(address _address, uint256 points) public onlyOwner {
+        require(_points[_tokenId[_address]] >= points, NotEnoughPoints(points));
+        _points[_tokenId[_address]] -= points;
+        emit Burn(_address, points);
     }
 
     /**
-     * @notice Change the URI of the fidelity card
-     * @param _address The address of the owner of the fidelity card
-     * @param _uri The new URI of the fidelity card
+     * @notice Change the base URI of the fidelity card
+     * @param uri The new base URI of the fidelity card
      */
-    function changeURI(address _address, string memory _uri) public onlyOwner {
-        uri[tokenId[_address]] = _uri;
-        emit ChangeURI(_address, _uri);
+    function changeURI(string memory uri) public onlyOwner {
+        _baseURI = uri;
+        emit ChangeURI(uri);
     }
 
     /**
      * @notice Get the URI of the fidelity card
-     * @param _tokenId The token ID of the fidelity card
      * @return The URI of the fidelity card
      */
-    function getURI(uint256 _tokenId) public view returns (string memory) {
-        return uri[_tokenId];
+    function tokenURI() public view returns (string memory) {
+        return _baseURI;
     }
 
     /**
@@ -107,7 +117,7 @@ contract FidelityCard is Ownable{
      * @return The token ID of the fidelity card
      */
     function getTokenId(address _address) public view returns (uint256) {
-        return tokenId[_address];
+        return _tokenId[_address];
     }
 
     /**
@@ -118,4 +128,22 @@ contract FidelityCard is Ownable{
         return totalSupply;
     }
 
+    /**
+     * @notice Get the card type of the fidelity card
+     * @param _address The address of the owner of the fidelity card
+     * @return The card type of the fidelity card
+     */
+    function getCardType(address _address) public view returns (CardType) {
+        return _typeCard[_tokenId[_address]];
+    }
+
+    /**
+     * @notice Change the card type of the fidelity card
+     * @param _address The address of the owner of the fidelity card
+     * @param typeCard The new card type of the fidelity card
+     */
+    function changeCardType(address _address, CardType typeCard) public onlyOwner {
+        _typeCard[_tokenId[_address]] = typeCard;
+        emit ChangeCardType(_tokenId[_address], typeCard);
+    }
 }
