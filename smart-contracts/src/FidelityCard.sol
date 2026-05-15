@@ -113,7 +113,7 @@ contract FidelityCard is Ownable, ERC721URIStorage {
     }
 
     function burn(address owner, uint256 amount) external onlyOwner {
-        require(_balances[owner] >= amount, INSUFFICIENT_BALANCE(amount));
+        if (_balances[owner] < amount) revert INSUFFICIENT_BALANCE(amount);
         _balances[owner] -= amount;
         _totalBurned += amount;
         emit Burned(_tokenIds[owner], owner, amount);

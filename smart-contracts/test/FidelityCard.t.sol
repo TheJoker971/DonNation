@@ -6,6 +6,10 @@ import {FidelityCard} from "../src/FidelityCard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract FidelityCardTest is Test {
+    event Minted(uint256 indexed tokenId, address indexed owner, uint256 amount);
+    event PointsAdded(uint256 indexed tokenId, address indexed owner, uint256 amount);
+    event Burned(uint256 indexed tokenId, address indexed owner, uint256 amount);
+
     FidelityCard internal card;
     address internal constant owner = address(0xA11);
     address internal constant user = address(0xB0B);
@@ -19,7 +23,7 @@ contract FidelityCardTest is Test {
     function test_Mint_tokenURI_and_ownerOf() public {
         vm.prank(owner);
         vm.expectEmit(true, true, true, true);
-        emit FidelityCard.Minted(1, user, 100);
+        emit Minted(1, user, 100);
         card.mint(user, 100, uri);
 
         assertEq(card.ownerOf(1), user);
@@ -41,7 +45,7 @@ contract FidelityCardTest is Test {
         vm.startPrank(owner);
         card.mint(user, 50, uri);
         vm.expectEmit(true, true, true, true);
-        emit FidelityCard.PointsAdded(1, user, 25);
+        emit PointsAdded(1, user, 25);
         card.addPoints(user, 25);
         vm.stopPrank();
 
@@ -164,7 +168,7 @@ contract FidelityCardTest is Test {
         vm.startPrank(owner);
         card.mint(user, 50, uri);
         vm.expectEmit(true, true, true, true);
-        emit FidelityCard.Burned(1, user, 30);
+        emit Burned(1, user, 30);
         card.burn(user, 30);
         vm.stopPrank();
 
