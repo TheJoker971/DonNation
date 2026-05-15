@@ -1,4 +1,8 @@
-out/
-cache/
-broadcast/
+# Secrets & config locale
 .env
+
+# Foundry
+cache/
+out/
+broadcast/
+lcov.info
