@@ -1,0 +1,7 @@
+# Secrets & config locale
+.env
+
+# Foundry
+cache/
+out/
+broadcast/
