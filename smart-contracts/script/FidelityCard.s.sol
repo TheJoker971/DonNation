@@ -12,12 +12,9 @@ contract FidelityCardScript is Script {
     function run() public {
         vm.startBroadcast();
         FidelityCard fidelityCard = new FidelityCard(msg.sender);
-        fidelityCard.mint(address(msg.sender), 500, anvil);
+        fidelityCard.mint(address(msg.sender), keccak256("550e8400-e29b-41d4-a716-446655440001"), 500, anvil);
         console.log("Fidelity Card minted for 0xAE934c9e17ca46aEb58E88899f14d5bA6e92CC2E");
-        console.log(
-            "Fidelity Card balance of 0xAE934c9e17ca46aEb58E88899f14d5bA6e92CC2E: %s",
-            fidelityCard.balanceOf(msg.sender)
-        );
+        console.log("Fidelity Card NFT count: %s", fidelityCard.balanceOf(msg.sender));
         vm.stopBroadcast();
     }
 }

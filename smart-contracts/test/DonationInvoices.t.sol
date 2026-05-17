@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {DonationInvoices} from "../src/DonationInvoices.sol";
@@ -8,21 +8,21 @@ contract DonationInvoicesTest is Test {
     event InvoiceMinted(
         address indexed invoiceOwner,
         uint256 indexed tokenId,
-        uint256 indexed associationId,
+        bytes32 indexed associationId,
         uint256 amountEur
     );
 
     DonationInvoices internal invoices;
 
-    address internal owner = makeAddr("owner");
-    address internal donor = makeAddr("donor");
+    address internal owner   = makeAddr("owner");
+    address internal donor   = makeAddr("donor");
     address internal stranger = makeAddr("stranger");
 
-    uint256 internal constant ASSOCIATION_ID = 42;
-    uint256 internal constant AMOUNT_EUR = 1050;
-    uint256 internal constant POINTS_EARNED = 100;
-    bytes32 internal constant PAYMENT_HASH = keccak256("stripe:pi:test-001");
-    bytes32 internal constant RECEIPT_HASH = keccak256("receipt:payload-v1");
+    bytes32 internal constant ASSOCIATION_ID = keccak256("550e8400-e29b-41d4-a716-446655440001");
+    uint256 internal constant AMOUNT_EUR     = 1050;
+    uint256 internal constant POINTS_EARNED  = 100;
+    bytes32 internal constant PAYMENT_HASH   = keccak256("stripe:pi:test-001");
+    bytes32 internal constant RECEIPT_HASH   = keccak256("receipt:payload-v1");
 
     function setUp() public {
         invoices = new DonationInvoices(owner);
@@ -92,8 +92,8 @@ contract DonationInvoicesTest is Test {
 
     function test_mint_revertsIfAssociationIdZero() public {
         vm.prank(owner);
-        vm.expectRevert(abi.encodeWithSelector(DonationInvoices.AssociationNotActive.selector, uint256(0)));
-        invoices.mint(donor, 0, AMOUNT_EUR, POINTS_EARNED, PAYMENT_HASH, RECEIPT_HASH);
+        vm.expectRevert(DonationInvoices.InvalidAssociationId.selector);
+        invoices.mint(donor, bytes32(0), AMOUNT_EUR, POINTS_EARNED, PAYMENT_HASH, RECEIPT_HASH);
     }
 
     function test_mint_revertsIfZeroAmount() public {
