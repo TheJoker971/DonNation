@@ -30,12 +30,6 @@ contract DeployDonNation is Script {
     console2.log("DonationInvoices deployed:", address(invoices));
     console2.log("DonationInvoices owner:", invoices.owner());
 
-    address fidelityCardAddress = vm.envOr("FIDELITY_CARD_ADDRESS", address(0));
-    if (fidelityCardAddress != address(0)) {
-      invoices.setFidelityCard(fidelityCardAddress);
-      console2.log("Fidelity card configured:", fidelityCardAddress);
-    }
-
     vm.stopBroadcast();
   }
 }
