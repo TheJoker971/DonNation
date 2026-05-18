@@ -1,167 +1,93 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IDonNationProtocol} from "./interfaces/IDonNationProtocol.sol";
-import {IFidelityCard1155} from "./interfaces/IFidelityCard1155.sol";
 
 /// @title DonationInvoices
-/// @notice Registre on-chain des reçus de donation (V1) — une invoice = un NFT ERC-721.
-/// @dev Montants: amount = USDC (6 décimales), amountEur = centimes (0 si absent).
-///      Identité donateur XOR: donorWallet OU donorIdentityHash (jamais les deux).
+/// @notice Registre on-chain des reçus de donation — une invoice = un NFT ERC-721 soulbound.
+/// @dev Owner = DonNationProtocol, qui valide l'association avant d'appeler mint().
+///      associationId est un bytes32 représentant un UUID.
 contract DonationInvoices is ERC721, ERC721URIStorage, Ownable {
+    // ─── Types ───────────────────────────────────────────────────────────────
+
     struct Invoice {
-        uint256 associationId;
-        address donorWallet;
-        bytes32 donorIdentityHash;
-        uint256 amount;
+        bytes32 associationId;
         uint256 amountEur;
         uint256 pointsEarned;
         bytes32 externalPaymentIdHash;
         bytes32 receiptHash;
-        uint64 createdAt;
+        uint256 createdAt;
     }
 
-    error PaymentAlreadyRegistered(bytes32 paymentHash);
-    error AssociationNotActive(uint256 associationId);
-    error InvalidDonorIdentity();
-    error ZeroAmount();
+    // ─── Errors ───────────────────────────────────────────────────────────────
 
-    IDonNationProtocol public immutable donNationProtocol;
-    IFidelityCard1155 public fidelityCard;
+    error PaymentAlreadyRegistered(bytes32 paymentHash);
+    error InvalidAssociationId();
+    error ZeroAmount();
+    error ZeroPointsEarned();
+    error InvalidReceiptHash();
+    error NOT_TRANSFERABLE();
+
+    // ─── Events ───────────────────────────────────────────────────────────────
+
+    event InvoiceMinted(
+        address indexed invoiceOwner, uint256 indexed tokenId, bytes32 indexed associationId, uint256 amountEur
+    );
+
+    // ─── Storage ──────────────────────────────────────────────────────────────
 
     uint256 private _nextTokenId = 1;
 
     mapping(uint256 => Invoice) private _invoices;
     mapping(bytes32 => bool) private _usedPaymentHashes;
 
-    event InvoiceMinted(
-        uint256 indexed tokenId,
-        uint256 indexed associationId,
-        bytes32 indexed externalPaymentIdHash,
-        address donorWallet,
-        bytes32 donorIdentityHash,
-        uint256 amount,
-        uint256 amountEur,
-        uint256 pointsEarned,
-        bytes32 receiptHash,
-        uint64 createdAt
-    );
+    // ─── Constructor ─────────────────────────────────────────────────────────
 
-    event FidelityCardUpdated(address indexed previousCard, address indexed newCard);
+    constructor(address protocolAddress) ERC721("DonNation Donation Receipt", "DDR") Ownable(protocolAddress) {}
 
-    constructor(address protocolAddress) ERC721("DonNation Donation Receipt", "DNINV") Ownable(msg.sender) {
-        donNationProtocol = IDonNationProtocol(protocolAddress);
+    // ─── Soulbound ────────────────────────────────────────────────────────────
+
+    function _update(address to, uint256 tokenId, address from) internal override(ERC721) returns (address) {
+        if (from != address(0)) revert NOT_TRANSFERABLE();
+        return super._update(to, tokenId, from);
     }
 
-    /// @notice Enregistre une donation confirmée et mint le reçu NFT.
-    /// @param to Destinataire du NFT (souvent le wallet du donateur).
-    /// @param uri Metadata JSON off-chain (IPFS / HTTPS).
-    struct MintParams {
-        address to;
-        uint256 associationId;
-        address donorWallet;
-        bytes32 donorIdentityHash;
-        uint256 amount;
-        uint256 amountEur;
-        uint256 pointsEarned;
-        bytes32 externalPaymentIdHash;
-        bytes32 receiptHash;
-        string uri;
-    }
+    // ─── Write ────────────────────────────────────────────────────────────────
 
-    function mintInvoice(
+    /// @notice Mint un reçu de donation. Appelé uniquement par DonNationProtocol (owner).
+    function mint(
         address to,
-        uint256 associationId,
-        address donorWallet,
-        bytes32 donorIdentityHash,
-        uint256 amount,
+        bytes32 associationId,
         uint256 amountEur,
         uint256 pointsEarned,
         bytes32 externalPaymentIdHash,
-        bytes32 receiptHash,
-        string calldata uri
-    ) external onlyOwner returns (uint256 tokenId) {
-        tokenId = _mintInvoice(
-            MintParams({
-                to: to,
-                associationId: associationId,
-                donorWallet: donorWallet,
-                donorIdentityHash: donorIdentityHash,
-                amount: amount,
-                amountEur: amountEur,
-                pointsEarned: pointsEarned,
-                externalPaymentIdHash: externalPaymentIdHash,
-                receiptHash: receiptHash,
-                uri: uri
-            })
-        );
+        bytes32 receiptHash
+    ) external onlyOwner {
+        if (_usedPaymentHashes[externalPaymentIdHash]) {
+            revert PaymentAlreadyRegistered(externalPaymentIdHash);
+        }
+        if (associationId == bytes32(0)) revert InvalidAssociationId();
+        if (amountEur == 0) revert ZeroAmount();
+        if (pointsEarned == 0) revert ZeroPointsEarned();
+        if (receiptHash == bytes32(0)) revert InvalidReceiptHash();
+
+        uint256 tokenId = _nextTokenId;
+        _mint(to, tokenId);
+        _invoices[tokenId] =
+            Invoice(associationId, amountEur, pointsEarned, externalPaymentIdHash, receiptHash, block.timestamp);
+        _usedPaymentHashes[externalPaymentIdHash] = true;
+
+        emit InvoiceMinted(to, tokenId, associationId, amountEur);
+        _nextTokenId++;
     }
 
-    function _mintInvoice(MintParams memory p) private returns (uint256 tokenId) {
-        bool hasWallet = p.donorWallet != address(0);
-        bool hasIdentityHash = p.donorIdentityHash != bytes32(0);
-        if (hasWallet == hasIdentityHash) revert InvalidDonorIdentity();
-        if (p.amount == 0) revert ZeroAmount();
-        if (!donNationProtocol.isAssociationActive(p.associationId)) {
-            revert AssociationNotActive(p.associationId);
-        }
-        if (_usedPaymentHashes[p.externalPaymentIdHash]) {
-            revert PaymentAlreadyRegistered(p.externalPaymentIdHash);
-        }
-
-        tokenId = _nextTokenId++;
-        _usedPaymentHashes[p.externalPaymentIdHash] = true;
-
-        _mint(p.to, tokenId);
-        _setTokenURI(tokenId, p.uri);
-
-        uint64 createdAt = uint64(block.timestamp);
-        _invoices[tokenId] = Invoice({
-            associationId: p.associationId,
-            donorWallet: p.donorWallet,
-            donorIdentityHash: p.donorIdentityHash,
-            amount: p.amount,
-            amountEur: p.amountEur,
-            pointsEarned: p.pointsEarned,
-            externalPaymentIdHash: p.externalPaymentIdHash,
-            receiptHash: p.receiptHash,
-            createdAt: createdAt
-        });
-
-        if (address(fidelityCard) != address(0) && p.pointsEarned > 0) {
-            fidelityCard.grantPoints(p.to, p.pointsEarned, tokenId);
-        }
-
-        emit InvoiceMinted(
-            tokenId,
-            p.associationId,
-            p.externalPaymentIdHash,
-            p.donorWallet,
-            p.donorIdentityHash,
-            p.amount,
-            p.amountEur,
-            p.pointsEarned,
-            p.receiptHash,
-            createdAt
-        );
-    }
-
-    function setFidelityCard(address cardAddress) external onlyOwner {
-        address previous = address(fidelityCard);
-        fidelityCard = IFidelityCard1155(cardAddress);
-        emit FidelityCardUpdated(previous, cardAddress);
-    }
+    // ─── Read ─────────────────────────────────────────────────────────────────
 
     function getInvoice(uint256 tokenId) external view returns (Invoice memory) {
         _requireOwned(tokenId);
         return _invoices[tokenId];
-    }
-
-    function isPaymentHashUsed(bytes32 externalPaymentIdHash) external view returns (bool) {
-        return _usedPaymentHashes[externalPaymentIdHash];
     }
 
     function nextTokenId() external view returns (uint256) {
