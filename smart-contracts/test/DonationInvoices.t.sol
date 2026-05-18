@@ -6,23 +6,20 @@ import {DonationInvoices} from "../src/DonationInvoices.sol";
 
 contract DonationInvoicesTest is Test {
     event InvoiceMinted(
-        address indexed invoiceOwner,
-        uint256 indexed tokenId,
-        bytes32 indexed associationId,
-        uint256 amountEur
+        address indexed invoiceOwner, uint256 indexed tokenId, bytes32 indexed associationId, uint256 amountEur
     );
 
     DonationInvoices internal invoices;
 
-    address internal owner   = makeAddr("owner");
-    address internal donor   = makeAddr("donor");
+    address internal owner = makeAddr("owner");
+    address internal donor = makeAddr("donor");
     address internal stranger = makeAddr("stranger");
 
     bytes32 internal constant ASSOCIATION_ID = keccak256("550e8400-e29b-41d4-a716-446655440001");
-    uint256 internal constant AMOUNT_EUR     = 1050;
-    uint256 internal constant POINTS_EARNED  = 100;
-    bytes32 internal constant PAYMENT_HASH   = keccak256("stripe:pi:test-001");
-    bytes32 internal constant RECEIPT_HASH   = keccak256("receipt:payload-v1");
+    uint256 internal constant AMOUNT_EUR = 1050;
+    uint256 internal constant POINTS_EARNED = 100;
+    bytes32 internal constant PAYMENT_HASH = keccak256("stripe:pi:test-001");
+    bytes32 internal constant RECEIPT_HASH = keccak256("receipt:payload-v1");
 
     function setUp() public {
         invoices = new DonationInvoices(owner);

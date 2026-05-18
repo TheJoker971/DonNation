@@ -10,13 +10,12 @@ import {FidelityCard} from "./FidelityCard.sol";
 /// @dev Owner de DonationInvoices et FidelityCard.
 ///      Flux : registerAssociation → mintInvoice (gère automatiquement la carte de fidélité).
 contract DonNationProtocol is Ownable {
-
     // ─── Types ───────────────────────────────────────────────────────────────
 
     struct AssociationConfig {
-        bool registered;       // existe dans le registre
-        bool active;           // peut recevoir des donations
-        bool fidelityEnabled;  // carte de fidélité activée pour cette association
+        bool registered; // existe dans le registre
+        bool active; // peut recevoir des donations
+        bool fidelityEnabled; // carte de fidélité activée pour cette association
     }
 
     // ─── Errors ───────────────────────────────────────────────────────────────
@@ -62,11 +61,8 @@ contract DonNationProtocol is Ownable {
         if (associationId == bytes32(0)) revert InvalidAssociationId();
         if (_registeredAssociations[associationId].registered) revert AssociationAlreadyRegistered(associationId);
 
-        _registeredAssociations[associationId] = AssociationConfig({
-            registered: true,
-            active: true,
-            fidelityEnabled: false
-        });
+        _registeredAssociations[associationId] =
+            AssociationConfig({registered: true, active: true, fidelityEnabled: false});
 
         emit AssociationRegistered(associationId);
     }

@@ -14,26 +14,26 @@ contract DonNationProtocolTest is Test {
     event ContractsUpdated(address indexed invoices, address indexed fidelityCard);
 
     DonNationProtocol internal protocol;
-    DonationInvoices  internal invoices;
-    FidelityCard      internal fidelityCard;
+    DonationInvoices internal invoices;
+    FidelityCard internal fidelityCard;
 
-    address internal constant OWNER   = address(0xA11);
-    address internal constant DONOR   = address(0xB0B);
+    address internal constant OWNER = address(0xA11);
+    address internal constant DONOR = address(0xB0B);
     address internal constant STRANGER = address(0xC0C);
 
-    bytes32 internal constant ASSOC       = keccak256("550e8400-e29b-41d4-a716-446655440001");
-    bytes32 internal constant ASSOC_2     = keccak256("550e8400-e29b-41d4-a716-446655440002");
+    bytes32 internal constant ASSOC = keccak256("550e8400-e29b-41d4-a716-446655440001");
+    bytes32 internal constant ASSOC_2 = keccak256("550e8400-e29b-41d4-a716-446655440002");
     bytes32 internal constant PAYMENT_HASH = keccak256("stripe:pi:test-001");
     bytes32 internal constant RECEIPT_HASH = keccak256("receipt:payload-v1");
-    string  internal constant FIDELITY_URI = "ipfs://fidelity-card-meta";
+    string internal constant FIDELITY_URI = "ipfs://fidelity-card-meta";
 
-    uint256 internal constant AMOUNT_EUR    = 1050;
+    uint256 internal constant AMOUNT_EUR = 1050;
     uint256 internal constant POINTS_EARNED = 100;
 
     function setUp() public {
         vm.startPrank(OWNER);
-        protocol    = new DonNationProtocol(OWNER);
-        invoices    = new DonationInvoices(address(protocol));
+        protocol = new DonNationProtocol(OWNER);
+        invoices = new DonationInvoices(address(protocol));
         fidelityCard = new FidelityCard(address(protocol));
         protocol.setContracts(address(invoices), address(fidelityCard));
         vm.stopPrank();

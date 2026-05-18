@@ -10,7 +10,6 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /// @dev Owner = DonNationProtocol, qui valide l'association avant d'appeler mint().
 ///      associationId est un bytes32 représentant un UUID.
 contract DonationInvoices is ERC721, ERC721URIStorage, Ownable {
-
     // ─── Types ───────────────────────────────────────────────────────────────
 
     struct Invoice {
@@ -34,10 +33,7 @@ contract DonationInvoices is ERC721, ERC721URIStorage, Ownable {
     // ─── Events ───────────────────────────────────────────────────────────────
 
     event InvoiceMinted(
-        address indexed invoiceOwner,
-        uint256 indexed tokenId,
-        bytes32 indexed associationId,
-        uint256 amountEur
+        address indexed invoiceOwner, uint256 indexed tokenId, bytes32 indexed associationId, uint256 amountEur
     );
 
     // ─── Storage ──────────────────────────────────────────────────────────────
@@ -69,7 +65,9 @@ contract DonationInvoices is ERC721, ERC721URIStorage, Ownable {
         bytes32 externalPaymentIdHash,
         bytes32 receiptHash
     ) external onlyOwner {
-        if (_usedPaymentHashes[externalPaymentIdHash]) revert PaymentAlreadyRegistered(externalPaymentIdHash);
+        if (_usedPaymentHashes[externalPaymentIdHash]) {
+            revert PaymentAlreadyRegistered(externalPaymentIdHash);
+        }
         if (associationId == bytes32(0)) revert InvalidAssociationId();
         if (amountEur == 0) revert ZeroAmount();
         if (pointsEarned == 0) revert ZeroPointsEarned();
@@ -77,7 +75,8 @@ contract DonationInvoices is ERC721, ERC721URIStorage, Ownable {
 
         uint256 tokenId = _nextTokenId;
         _mint(to, tokenId);
-        _invoices[tokenId] = Invoice(associationId, amountEur, pointsEarned, externalPaymentIdHash, receiptHash, block.timestamp);
+        _invoices[tokenId] =
+            Invoice(associationId, amountEur, pointsEarned, externalPaymentIdHash, receiptHash, block.timestamp);
         _usedPaymentHashes[externalPaymentIdHash] = true;
 
         emit InvoiceMinted(to, tokenId, associationId, amountEur);
