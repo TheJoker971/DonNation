@@ -49,7 +49,7 @@ contract DonNationProtocolTest is Test {
     function _registerAssocWithFidelity() internal {
         vm.startPrank(OWNER);
         protocol.registerAssociation(ASSOC);
-        protocol.setFidelityEnabled(ASSOC, true);
+        protocol.setFidelityEnabled(ASSOC);
         vm.stopPrank();
     }
 
@@ -125,7 +125,7 @@ contract DonNationProtocolTest is Test {
         vm.prank(OWNER);
         vm.expectEmit(true, false, false, true);
         emit AssociationActiveChanged(ASSOC, false);
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
 
         assertFalse(protocol.getAssociation(ASSOC).active);
         assertFalse(protocol.isAssociationActive(ASSOC));
@@ -135,8 +135,8 @@ contract DonNationProtocolTest is Test {
         _registerAssoc();
 
         vm.startPrank(OWNER);
-        protocol.setAssociationActive(ASSOC, false);
-        protocol.setAssociationActive(ASSOC, true);
+        protocol.setAssociationActive(ASSOC);
+        protocol.setAssociationActive(ASSOC);
         vm.stopPrank();
 
         assertTrue(protocol.isAssociationActive(ASSOC));
@@ -145,13 +145,13 @@ contract DonNationProtocolTest is Test {
     function test_setAssociationActive_revertsIfNotRegistered() public {
         vm.prank(OWNER);
         vm.expectRevert(abi.encodeWithSelector(DonNationProtocol.AssociationNotRegistered.selector, ASSOC));
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
     }
 
     function test_setAssociationActive_revertsIfNotOwner() public {
         vm.prank(STRANGER);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, STRANGER));
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
     }
 
     // ─── setFidelityEnabled ───────────────────────────────────────────────────
@@ -162,7 +162,7 @@ contract DonNationProtocolTest is Test {
         vm.prank(OWNER);
         vm.expectEmit(true, false, false, true);
         emit AssociationFidelityChanged(ASSOC, true);
-        protocol.setFidelityEnabled(ASSOC, true);
+        protocol.setFidelityEnabled(ASSOC);
 
         assertTrue(protocol.getAssociation(ASSOC).fidelityEnabled);
     }
@@ -171,7 +171,7 @@ contract DonNationProtocolTest is Test {
         _registerAssocWithFidelity();
 
         vm.prank(OWNER);
-        protocol.setFidelityEnabled(ASSOC, false);
+        protocol.setFidelityEnabled(ASSOC);
 
         assertFalse(protocol.getAssociation(ASSOC).fidelityEnabled);
     }
@@ -179,13 +179,13 @@ contract DonNationProtocolTest is Test {
     function test_setFidelityEnabled_revertsIfNotRegistered() public {
         vm.prank(OWNER);
         vm.expectRevert(abi.encodeWithSelector(DonNationProtocol.AssociationNotRegistered.selector, ASSOC));
-        protocol.setFidelityEnabled(ASSOC, true);
+        protocol.setFidelityEnabled(ASSOC);
     }
 
     function test_setFidelityEnabled_revertsIfNotOwner() public {
         vm.prank(STRANGER);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, STRANGER));
-        protocol.setFidelityEnabled(ASSOC, true);
+        protocol.setFidelityEnabled(ASSOC);
     }
 
     // ─── mintInvoice : reverts ────────────────────────────────────────────────
@@ -208,7 +208,7 @@ contract DonNationProtocolTest is Test {
         _registerAssoc();
 
         vm.startPrank(OWNER);
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
         vm.expectRevert(abi.encodeWithSelector(DonNationProtocol.AssociationNotActive.selector, ASSOC));
         protocol.mintInvoice(DONOR, ASSOC, AMOUNT_EUR, POINTS_EARNED, PAYMENT_HASH, RECEIPT_HASH, FIDELITY_URI);
         vm.stopPrank();
@@ -291,7 +291,7 @@ contract DonNationProtocolTest is Test {
         _registerAssoc();
 
         vm.prank(OWNER);
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
 
         assertFalse(protocol.isAssociationActive(ASSOC));
     }

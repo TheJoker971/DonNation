@@ -68,17 +68,19 @@ contract DonNationProtocol is Ownable {
     }
 
     /// @notice Active ou désactive une association.
-    function setAssociationActive(bytes32 associationId, bool active) external onlyOwner {
+    function setAssociationActive(bytes32 associationId) external onlyOwner {
         if (!_registeredAssociations[associationId].registered) revert AssociationNotRegistered(associationId);
-        _registeredAssociations[associationId].active = active;
-        emit AssociationActiveChanged(associationId, active);
+        bool active = _registeredAssociations[associationId].active;
+        _registeredAssociations[associationId].active = !active;
+        emit AssociationActiveChanged(associationId, !active);
     }
 
     /// @notice Active ou désactive la carte de fidélité pour une association.
-    function setFidelityEnabled(bytes32 associationId, bool enabled) external onlyOwner {
+    function setFidelityEnabled(bytes32 associationId) external onlyOwner {
         if (!_registeredAssociations[associationId].registered) revert AssociationNotRegistered(associationId);
-        _registeredAssociations[associationId].fidelityEnabled = enabled;
-        emit AssociationFidelityChanged(associationId, enabled);
+        bool enabled = _registeredAssociations[associationId].fidelityEnabled;
+        _registeredAssociations[associationId].fidelityEnabled = !enabled;
+        emit AssociationFidelityChanged(associationId, !enabled);
     }
 
     // ─── Protocol actions ─────────────────────────────────────────────────────
