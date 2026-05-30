@@ -97,52 +97,45 @@ contract FidelityCardTest is Test {
         card.mint(USER, bytes32(0), 100, URI_1);
     }
 
-    function test_mint_reverts_if_already_minted_same_association() public {
-        _mintAssoc1(50);
-
-        vm.prank(OWNER);
-        vm.expectRevert(abi.encodeWithSelector(FidelityCard.ALREADY_MINTED.selector, ASSOC_1));
-        card.mint(USER, ASSOC_1, 25, URI_1);
-    }
-
-    // ─── addPoints ────────────────────────────────────────────────────────────
-
-    function test_addPoints_succeeds() public {
+    function test_mint_addsPointsIfCardExists() public {
         _mintAssoc1(50);
 
         vm.prank(OWNER);
         vm.expectEmit(true, true, true, true);
         emit FidelityCard.PointsAdded(1, USER, ASSOC_1, 25);
-        card.addPoints(USER, ASSOC_1, 25);
+        card.mint(USER, ASSOC_1, 25, URI_1);
 
         FidelityCard.CardData memory data = card.getCard(USER, ASSOC_1);
         assertEq(data.balance, 75);
         assertEq(data.totalEarned, 75);
+        assertEq(card.totalSupply(), 1); // aucun nouveau NFT minté
     }
 
-    function test_addPoints_independent_per_association() public {
+    function test_mint_addsPoints_doesNotChangeTotalSupply() public {
+        _mintAssoc1(100);
+
+        vm.startPrank(OWNER);
+        card.mint(USER, ASSOC_1, 50, URI_1);
+        card.mint(USER, ASSOC_1, 30, URI_1);
+        vm.stopPrank();
+
+        assertEq(card.totalSupply(), 1);
+        assertEq(card.getCard(USER, ASSOC_1).balance, 180);
+        assertEq(card.getCard(USER, ASSOC_1).totalEarned, 180);
+    }
+
+    function test_mint_addsPoints_independent_per_association() public {
         _mintAssoc1(50);
         _mintAssoc2(30);
 
         vm.startPrank(OWNER);
-        card.addPoints(USER, ASSOC_1, 10);
-        card.addPoints(USER, ASSOC_2, 20);
+        card.mint(USER, ASSOC_1, 10, URI_1);
+        card.mint(USER, ASSOC_2, 20, URI_2);
         vm.stopPrank();
 
         assertEq(card.getCard(USER, ASSOC_1).balance, 60);
         assertEq(card.getCard(USER, ASSOC_2).balance, 50);
-    }
-
-    function test_addPoints_reverts_if_not_minted() public {
-        vm.prank(OWNER);
-        vm.expectRevert(abi.encodeWithSelector(FidelityCard.NOT_MINTED.selector, ASSOC_1));
-        card.addPoints(USER, ASSOC_1, 25);
-    }
-
-    function test_addPoints_reverts_if_not_owner() public {
-        vm.prank(USER);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, USER));
-        card.addPoints(USER, ASSOC_1, 25);
+        assertEq(card.totalSupply(), 2);
     }
 
     // ─── burn (points) ────────────────────────────────────────────────────────
@@ -222,6 +215,33 @@ contract FidelityCardTest is Test {
         vm.prank(USER);
         vm.expectRevert(FidelityCard.NON_TRANSFERABLE.selector);
         card.transferFrom(USER, OTHER, 1);
+    }
+
+    // ─── getAssociationCardHolders ────────────────────────────────────────────
+
+    function test_getAssociationCardHolders_returnsHolders() public {
+        _mintAssoc1(100);
+
+        address[] memory holders = card.getAssociationCardHolders(ASSOC_1);
+        assertEq(holders.length, 1);
+        assertEq(holders[0], USER);
+    }
+
+    function test_getAssociationCardHolders_emptyBeforeMint() public view {
+        address[] memory holders = card.getAssociationCardHolders(ASSOC_1);
+        assertEq(holders.length, 0);
+    }
+
+    function test_getAssociationCardHolders_multipleHolders() public {
+        vm.startPrank(OWNER);
+        card.mint(USER, ASSOC_1, 100, URI_1);
+        card.mint(OTHER, ASSOC_1, 50, URI_1);
+        vm.stopPrank();
+
+        address[] memory holders = card.getAssociationCardHolders(ASSOC_1);
+        assertEq(holders.length, 2);
+        assertEq(holders[0], USER);
+        assertEq(holders[1], OTHER);
     }
 
     // ─── supportsInterface ────────────────────────────────────────────────────
