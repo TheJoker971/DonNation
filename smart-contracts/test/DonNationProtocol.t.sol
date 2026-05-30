@@ -11,6 +11,7 @@ contract DonNationProtocolTest is Test {
     event AssociationRegistered(bytes32 indexed associationId);
     event AssociationActiveChanged(bytes32 indexed associationId, bool active);
     event AssociationFidelityChanged(bytes32 indexed associationId, bool fidelityEnabled);
+    event InvoicesUriChanged(bytes32 indexed associationId, string uri);
     event ContractsUpdated(address indexed invoices, address indexed fidelityCard);
 
     DonNationProtocol internal protocol;
@@ -26,6 +27,7 @@ contract DonNationProtocolTest is Test {
     bytes32 internal constant PAYMENT_HASH = keccak256("stripe:pi:test-001");
     bytes32 internal constant RECEIPT_HASH = keccak256("receipt:payload-v1");
     string internal constant FIDELITY_URI = "ipfs://fidelity-card-meta";
+    string internal constant INVOICES_URI = "https://example.com/invoices";
 
     uint256 internal constant AMOUNT_EUR = 1050;
     uint256 internal constant POINTS_EARNED = 100;
@@ -49,7 +51,7 @@ contract DonNationProtocolTest is Test {
     function _registerAssocWithFidelity() internal {
         vm.startPrank(OWNER);
         protocol.registerAssociation(ASSOC);
-        protocol.setFidelityEnabled(ASSOC, true);
+        protocol.setFidelityEnabled(ASSOC);
         vm.stopPrank();
     }
 
@@ -95,6 +97,7 @@ contract DonNationProtocolTest is Test {
         assertTrue(config.registered);
         assertTrue(config.active);
         assertFalse(config.fidelityEnabled);
+        assertEq(config.invoicesUri, "");
     }
 
     function test_registerAssociation_revertsIfZeroId() public {
@@ -125,7 +128,7 @@ contract DonNationProtocolTest is Test {
         vm.prank(OWNER);
         vm.expectEmit(true, false, false, true);
         emit AssociationActiveChanged(ASSOC, false);
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
 
         assertFalse(protocol.getAssociation(ASSOC).active);
         assertFalse(protocol.isAssociationActive(ASSOC));
@@ -135,8 +138,8 @@ contract DonNationProtocolTest is Test {
         _registerAssoc();
 
         vm.startPrank(OWNER);
-        protocol.setAssociationActive(ASSOC, false);
-        protocol.setAssociationActive(ASSOC, true);
+        protocol.setAssociationActive(ASSOC);
+        protocol.setAssociationActive(ASSOC);
         vm.stopPrank();
 
         assertTrue(protocol.isAssociationActive(ASSOC));
@@ -145,13 +148,13 @@ contract DonNationProtocolTest is Test {
     function test_setAssociationActive_revertsIfNotRegistered() public {
         vm.prank(OWNER);
         vm.expectRevert(abi.encodeWithSelector(DonNationProtocol.AssociationNotRegistered.selector, ASSOC));
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
     }
 
     function test_setAssociationActive_revertsIfNotOwner() public {
         vm.prank(STRANGER);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, STRANGER));
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
     }
 
     // ─── setFidelityEnabled ───────────────────────────────────────────────────
@@ -162,7 +165,7 @@ contract DonNationProtocolTest is Test {
         vm.prank(OWNER);
         vm.expectEmit(true, false, false, true);
         emit AssociationFidelityChanged(ASSOC, true);
-        protocol.setFidelityEnabled(ASSOC, true);
+        protocol.setFidelityEnabled(ASSOC);
 
         assertTrue(protocol.getAssociation(ASSOC).fidelityEnabled);
     }
@@ -171,7 +174,9 @@ contract DonNationProtocolTest is Test {
         _registerAssocWithFidelity();
 
         vm.prank(OWNER);
-        protocol.setFidelityEnabled(ASSOC, false);
+        vm.expectEmit(true, false, false, true);
+        emit AssociationFidelityChanged(ASSOC, false);
+        protocol.setFidelityEnabled(ASSOC);
 
         assertFalse(protocol.getAssociation(ASSOC).fidelityEnabled);
     }
@@ -179,13 +184,49 @@ contract DonNationProtocolTest is Test {
     function test_setFidelityEnabled_revertsIfNotRegistered() public {
         vm.prank(OWNER);
         vm.expectRevert(abi.encodeWithSelector(DonNationProtocol.AssociationNotRegistered.selector, ASSOC));
-        protocol.setFidelityEnabled(ASSOC, true);
+        protocol.setFidelityEnabled(ASSOC);
     }
 
     function test_setFidelityEnabled_revertsIfNotOwner() public {
         vm.prank(STRANGER);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, STRANGER));
-        protocol.setFidelityEnabled(ASSOC, true);
+        protocol.setFidelityEnabled(ASSOC);
+    }
+
+    // ─── setInvoicesUri ───────────────────────────────────────────────────────
+
+    function test_setInvoicesUri_succeeds() public {
+        _registerAssoc();
+
+        vm.prank(OWNER);
+        vm.expectEmit(true, false, false, true);
+        emit InvoicesUriChanged(ASSOC, INVOICES_URI);
+        protocol.setInvoicesUri(ASSOC, INVOICES_URI);
+
+        assertEq(protocol.getAssociation(ASSOC).invoicesUri, INVOICES_URI);
+    }
+
+    function test_setInvoicesUri_canOverwrite() public {
+        _registerAssoc();
+
+        vm.startPrank(OWNER);
+        protocol.setInvoicesUri(ASSOC, INVOICES_URI);
+        protocol.setInvoicesUri(ASSOC, "https://example.com/v2");
+        vm.stopPrank();
+
+        assertEq(protocol.getAssociation(ASSOC).invoicesUri, "https://example.com/v2");
+    }
+
+    function test_setInvoicesUri_revertsIfNotRegistered() public {
+        vm.prank(OWNER);
+        vm.expectRevert(abi.encodeWithSelector(DonNationProtocol.AssociationNotRegistered.selector, ASSOC));
+        protocol.setInvoicesUri(ASSOC, INVOICES_URI);
+    }
+
+    function test_setInvoicesUri_revertsIfNotOwner() public {
+        vm.prank(STRANGER);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, STRANGER));
+        protocol.setInvoicesUri(ASSOC, INVOICES_URI);
     }
 
     // ─── mintInvoice : reverts ────────────────────────────────────────────────
@@ -208,7 +249,7 @@ contract DonNationProtocolTest is Test {
         _registerAssoc();
 
         vm.startPrank(OWNER);
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
         vm.expectRevert(abi.encodeWithSelector(DonNationProtocol.AssociationNotActive.selector, ASSOC));
         protocol.mintInvoice(DONOR, ASSOC, AMOUNT_EUR, POINTS_EARNED, PAYMENT_HASH, RECEIPT_HASH, FIDELITY_URI);
         vm.stopPrank();
@@ -220,6 +261,21 @@ contract DonNationProtocolTest is Test {
         protocol.mintInvoice(DONOR, ASSOC, AMOUNT_EUR, POINTS_EARNED, PAYMENT_HASH, RECEIPT_HASH, FIDELITY_URI);
     }
 
+    /// @dev Couvre la branche ContractsNotSet dans _creditFidelityCard :
+    ///      donationInvoices est défini mais fidelityCard = address(0).
+    function test_mintInvoice_revertsIfFidelityCardNotSet() public {
+        vm.startPrank(OWNER);
+        DonNationProtocol proto2 = new DonNationProtocol(OWNER);
+        DonationInvoices invoices2 = new DonationInvoices(address(proto2));
+        proto2.setContracts(address(invoices2), address(0));
+        proto2.registerAssociation(ASSOC);
+        proto2.setFidelityEnabled(ASSOC);
+
+        vm.expectRevert(DonNationProtocol.ContractsNotSet.selector);
+        proto2.mintInvoice(DONOR, ASSOC, AMOUNT_EUR, POINTS_EARNED, PAYMENT_HASH, RECEIPT_HASH, FIDELITY_URI);
+        vm.stopPrank();
+    }
+
     // ─── mintInvoice : succès sans fidélité ───────────────────────────────────
 
     function test_mintInvoice_withoutFidelity_mintsInvoice() public {
@@ -229,7 +285,6 @@ contract DonNationProtocolTest is Test {
         assertEq(invoices.ownerOf(1), DONOR);
         assertEq(invoices.nextTokenId(), 2);
 
-        // Pas de carte de fidélité mintée
         assertEq(fidelityCard.getCard(DONOR, ASSOC).tokenId, 0);
     }
 
@@ -261,19 +316,23 @@ contract DonNationProtocolTest is Test {
         assertEq(card.totalEarned, POINTS_EARNED + 50);
     }
 
-    // ─── mintInvoice : fidélité activée mais zéro points ─────────────────────
+    // ─── getAssociationCardHolders ────────────────────────────────────────────
 
-    function test_mintInvoice_withFidelity_skipsCardIfZeroPoints() public {
+    function test_getAssociationCardHolders_returnsHolders() public {
         _registerAssocWithFidelity();
+        _mintInvoice(PAYMENT_HASH);
+
+        address[] memory holders = protocol.getAssociationCardHolders(ASSOC);
+        assertEq(holders.length, 1);
+        assertEq(holders[0], DONOR);
+    }
+
+    function test_getAssociationCardHolders_revertsIfContractsNotSet() public {
+        DonNationProtocol proto2 = new DonNationProtocol(OWNER);
 
         vm.prank(OWNER);
-        // pointsEarned = 0 → DonationInvoices revert car ZeroPointsEarned
-        // On teste donc avec pointsEarned > 0 mais on vérifie la branche fidelity skip
-        // via fidelityEnabled = false séparément (déjà couvert).
-        // Ici on confirme qu'avec points > 0 la carte est bien créée.
-        protocol.mintInvoice(DONOR, ASSOC, AMOUNT_EUR, 1, PAYMENT_HASH, RECEIPT_HASH, FIDELITY_URI);
-
-        assertGt(fidelityCard.getCard(DONOR, ASSOC).tokenId, 0);
+        vm.expectRevert(DonNationProtocol.ContractsNotSet.selector);
+        proto2.getAssociationCardHolders(ASSOC);
     }
 
     // ─── isAssociationActive ──────────────────────────────────────────────────
@@ -291,7 +350,7 @@ contract DonNationProtocolTest is Test {
         _registerAssoc();
 
         vm.prank(OWNER);
-        protocol.setAssociationActive(ASSOC, false);
+        protocol.setAssociationActive(ASSOC);
 
         assertFalse(protocol.isAssociationActive(ASSOC));
     }

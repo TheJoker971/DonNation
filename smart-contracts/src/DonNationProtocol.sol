@@ -16,6 +16,7 @@ contract DonNationProtocol is Ownable {
         bool registered; // existe dans le registre
         bool active; // peut recevoir des donations
         bool fidelityEnabled; // carte de fidélité activée pour cette association
+        string invoicesUri;
     }
 
     // ─── Errors ───────────────────────────────────────────────────────────────
@@ -24,6 +25,7 @@ contract DonNationProtocol is Ownable {
     error AssociationAlreadyRegistered(bytes32 associationId);
     error AssociationNotRegistered(bytes32 associationId);
     error AssociationNotActive(bytes32 associationId);
+    error AssociationFidelityDisabled(bytes32 associationId);
     error ContractsNotSet();
 
     // ─── Events ───────────────────────────────────────────────────────────────
@@ -32,6 +34,7 @@ contract DonNationProtocol is Ownable {
     event AssociationActiveChanged(bytes32 indexed associationId, bool active);
     event AssociationFidelityChanged(bytes32 indexed associationId, bool fidelityEnabled);
     event ContractsUpdated(address indexed invoices, address indexed fidelityCard);
+    event InvoicesUriChanged(bytes32 indexed associationId, string uri);
 
     // ─── Storage ──────────────────────────────────────────────────────────────
 
@@ -62,23 +65,31 @@ contract DonNationProtocol is Ownable {
         if (_registeredAssociations[associationId].registered) revert AssociationAlreadyRegistered(associationId);
 
         _registeredAssociations[associationId] =
-            AssociationConfig({registered: true, active: true, fidelityEnabled: false});
+            AssociationConfig({registered: true, active: true, fidelityEnabled: false, invoicesUri: ""});
 
         emit AssociationRegistered(associationId);
     }
 
     /// @notice Active ou désactive une association.
-    function setAssociationActive(bytes32 associationId, bool active) external onlyOwner {
+    function setAssociationActive(bytes32 associationId) external onlyOwner {
         if (!_registeredAssociations[associationId].registered) revert AssociationNotRegistered(associationId);
-        _registeredAssociations[associationId].active = active;
-        emit AssociationActiveChanged(associationId, active);
+        bool active = _registeredAssociations[associationId].active;
+        _registeredAssociations[associationId].active = !active;
+        emit AssociationActiveChanged(associationId, !active);
     }
 
     /// @notice Active ou désactive la carte de fidélité pour une association.
-    function setFidelityEnabled(bytes32 associationId, bool enabled) external onlyOwner {
+    function setFidelityEnabled(bytes32 associationId) external onlyOwner {
         if (!_registeredAssociations[associationId].registered) revert AssociationNotRegistered(associationId);
-        _registeredAssociations[associationId].fidelityEnabled = enabled;
-        emit AssociationFidelityChanged(associationId, enabled);
+        bool enabled = _registeredAssociations[associationId].fidelityEnabled;
+        _registeredAssociations[associationId].fidelityEnabled = !enabled;
+        emit AssociationFidelityChanged(associationId, !enabled);
+    }
+
+    function setInvoicesUri(bytes32 associationId, string calldata uri) external onlyOwner {
+        if (!_registeredAssociations[associationId].registered) revert AssociationNotRegistered(associationId);
+        _registeredAssociations[associationId].invoicesUri = uri;
+        emit InvoicesUriChanged(associationId, uri);
     }
 
     // ─── Protocol actions ─────────────────────────────────────────────────────
@@ -103,14 +114,16 @@ contract DonNationProtocol is Ownable {
 
         donationInvoices.mint(to, associationId, amountEur, pointsEarned, externalPaymentIdHash, receiptHash);
 
-        if (config.fidelityEnabled && pointsEarned > 0 && address(fidelityCard) != address(0)) {
-            FidelityCard.CardData memory card = fidelityCard.getCard(to, associationId);
-            if (card.tokenId == 0) {
-                fidelityCard.mint(to, associationId, pointsEarned, fidelityCardUri);
-            } else {
-                fidelityCard.addPoints(to, associationId, pointsEarned);
-            }
+        if (config.fidelityEnabled) {
+            _creditFidelityCard(to, associationId, pointsEarned, fidelityCardUri);
         }
+    }
+
+    /// @notice Crédite la carte de fidélité d'un utilisateur : mint si inexistante, ajout de points sinon.
+    /// @dev `uri` est utilisé uniquement lors du premier mint ; ignoré si la carte existe déjà.
+    function _creditFidelityCard(address to, bytes32 associationId, uint256 points, string calldata uri) internal {
+        if (address(fidelityCard) == address(0)) revert ContractsNotSet();
+        fidelityCard.mint(to, associationId, points, uri);
     }
 
     // ─── Read ─────────────────────────────────────────────────────────────────
@@ -124,5 +137,11 @@ contract DonNationProtocol is Ownable {
     function isAssociationActive(bytes32 associationId) external view returns (bool) {
         AssociationConfig memory config = _registeredAssociations[associationId];
         return config.registered && config.active;
+    }
+
+    /// @notice Retourne la liste des adresses ayant une carte de fidélité pour une association.
+    function getAssociationCardHolders(bytes32 associationId) external view returns (address[] memory) {
+        if (address(fidelityCard) == address(0)) revert ContractsNotSet();
+        return fidelityCard.getAssociationCardHolders(associationId);
     }
 }

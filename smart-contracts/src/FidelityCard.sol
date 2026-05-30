@@ -36,7 +36,6 @@ contract FidelityCard is Ownable, ERC721URIStorage {
 
     error INSUFFICIENT_BALANCE(uint256 amount);
     error NON_TRANSFERABLE();
-    error ALREADY_MINTED(bytes32 associationId);
     error NOT_MINTED(bytes32 associationId);
     error INVALID_ASSOCIATION_ID();
 
@@ -60,6 +59,8 @@ contract FidelityCard is Ownable, ERC721URIStorage {
     mapping(uint256 => bytes32) private _tokenAssociation;
     /// owner => liste des associationIds mintés
     mapping(address => bytes32[]) private _userAssociations;
+    /// associationId => liste des détenteurs de carte
+    mapping(bytes32 => address[]) private _associationCardHolders;
 
     // ─── Constructor ─────────────────────────────────────────────────────────
 
@@ -75,10 +76,19 @@ contract FidelityCard is Ownable, ERC721URIStorage {
 
     // ─── Write ────────────────────────────────────────────────────────────────
 
-    /// @notice Mint une carte de fidélité pour `owner` liée à `associationId` (UUID encodé en bytes32).
+    /// @notice Mint une nouvelle carte ou ajoute des points si une carte existe déjà pour `owner` × `associationId`.
+    /// @dev Le paramètre `uri` est utilisé uniquement lors du premier mint ; il est ignoré si la carte existe.
     function mint(address owner, bytes32 associationId, uint256 amount, string memory uri) external onlyOwner {
         if (associationId == bytes32(0)) revert INVALID_ASSOCIATION_ID();
-        if (_cards[owner][associationId].tokenId != 0) revert ALREADY_MINTED(associationId);
+
+        CardData storage card = _cards[owner][associationId];
+
+        if (card.tokenId != 0) {
+            card.balance += amount;
+            card.totalEarned += amount;
+            emit PointsAdded(card.tokenId, owner, associationId, amount);
+            return;
+        }
 
         uint256 id = _tokenIdCounter;
         _mint(owner, id);
@@ -91,21 +101,11 @@ contract FidelityCard is Ownable, ERC721URIStorage {
         _tokenOwner[id] = owner;
         _tokenAssociation[id] = associationId;
         _userAssociations[owner].push(associationId);
+        _associationCardHolders[associationId].push(owner);
         _totalSupply++;
         _tokenIdCounter++;
 
         emit Minted(id, owner, associationId, amount);
-    }
-
-    /// @notice Ajoute des points à la carte d'un utilisateur pour une association donnée.
-    function addPoints(address owner, bytes32 associationId, uint256 amount) external onlyOwner {
-        CardData storage card = _cards[owner][associationId];
-        if (card.tokenId == 0) revert NOT_MINTED(associationId);
-
-        card.balance += amount;
-        card.totalEarned += amount;
-
-        emit PointsAdded(card.tokenId, owner, associationId, amount);
     }
 
     /// @notice Brûle (dépense) des points sans brûler le NFT.
@@ -140,6 +140,11 @@ contract FidelityCard is Ownable, ERC721URIStorage {
     /// @notice Retourne la liste des associationIds pour lesquelles l'utilisateur a une carte.
     function getUserAssociations(address owner) external view returns (bytes32[] memory) {
         return _userAssociations[owner];
+    }
+
+    /// @notice Retourne la liste des adresses détenant une carte pour une association donnée.
+    function getAssociationCardHolders(bytes32 associationId) external view returns (address[] memory) {
+        return _associationCardHolders[associationId];
     }
 
     /// @notice Nombre total de NFTs mintés (toutes associations confondues).
