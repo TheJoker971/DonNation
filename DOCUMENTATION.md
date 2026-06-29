@@ -72,4 +72,5 @@ En cas de doute sur ce qui est **à faire maintenant**, se fier à `V1_HANDOFF.m
 
 - Branche de travail : **`feature/backend`**
 - Backend NestJS, contrats Foundry, flux don → Stripe → mint NFT validé en local (Anvil)
+- API front-ready : `GET /associations`, `GET /admin/associations`, CORS configuré
 - Frontend : à développer (spec dans `FRONTEND_V1.md`)

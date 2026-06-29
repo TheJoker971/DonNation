@@ -155,7 +155,7 @@ Authorization: Bearer ...
 
 | Route | Description |
 |-------|-------------|
-| `/associations` | Liste des assos **approuvées** (voir §8 — endpoint à ajouter ou workaround) |
+| `/associations` | Catalogue public des assos approuvées (`GET /associations`) |
 | `/associations/[slug]/donate` | Formulaire montant + paiement Stripe |
 | `/donations` | Historique (`GET /donations/me`) |
 | `/donations/[id]` | Détail don + statut mint (tokenId, txHash) |
@@ -224,12 +224,33 @@ Pages minimales :
 ### 6.3 Admin — approuver une association
 
 ```http
+GET /admin/associations?status=PENDING
 PATCH /admin/associations/:id/approve
 PATCH /admin/associations/:id/suspend
 Authorization: Bearer <admin_token>
 ```
 
-Pas de `GET /admin/associations` aujourd’hui → voir §8.
+`GET /admin/associations` retourne toutes les assos (filtrables par `status`). Chaque entrée inclut le profil `owner`.
+
+### 6.3bis Catalogue donateur (`/associations`)
+
+**API :** `GET /associations` (public, sans auth)
+
+Retourne uniquement les assos `APPROVED`, triées par nom. Champs exposés :
+
+```json
+{
+  "id": "uuid",
+  "name": "...",
+  "slug": "...",
+  "description": "...",
+  "logoUrl": null,
+  "stripeOnboardingComplete": true,
+  "approvedAt": "..."
+}
+```
+
+Afficher un badge « Peut recevoir des dons » si `stripeOnboardingComplete === true`. Sinon, désactiver le bouton don.
 
 ### 6.4 Flux don + paiement Stripe
 
@@ -349,17 +370,30 @@ export async function api<T>(
 
 ---
 
-## 8. Manques backend à prévoir (coordination)
+## 8. Backend prêt pour le front
 
-Ces endpoints **n'existent pas encore** — à ajouter côté backend ou contourner en V1 :
+Les endpoints suivants sont **disponibles** :
 
-| Besoin front | Endpoint suggéré | Workaround V1 |
-|--------------|------------------|---------------|
-| Admin : liste assos pending | `GET /admin/associations?status=PENDING` | Demander à l'équipe backend de l'ajouter |
-| Donateur : choisir une asso | `GET /associations?status=APPROVED` (public) | URL directe `/associations/[slug]/donate` avec UUID en dur pour démo |
-| Profil asso enrichi | — | `GET /associations/me` suffit |
+| Besoin front | Endpoint |
+|--------------|----------|
+| Admin : liste assos | `GET /admin/associations?status=PENDING` (filtre optionnel) |
+| Donateur : catalogue | `GET /associations` (public, approved only) |
+| CORS navigateur | `CORS_ORIGIN` dans `backend/.env` (défaut `http://localhost:3000`) |
 
-**Priorité backend pour le front :** `GET /admin/associations` et `GET /associations` (public, approved only).
+Exemple catalogue :
+
+```http
+GET /associations
+→ [{ "id", "name", "slug", "stripeOnboardingComplete", ... }]
+```
+
+Exemple admin :
+
+```http
+GET /admin/associations?status=PENDING
+Authorization: Bearer <admin_token>
+→ [{ ...association, "owner": { "id", "email", ... } }]
+```
 
 ---
 
@@ -416,7 +450,7 @@ Dans `frontend/.env.local` :
 NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ```
 
-CORS : si le backend bloque, ajouter une config CORS NestJS (`enableCors({ origin: 'http://localhost:3000' })`) — **à vérifier / ajouter si nécessaire**.
+CORS : le backend accepte les requêtes depuis `CORS_ORIGIN` (défaut `http://localhost:3000`). Ajuster dans `backend/.env` si le front tourne ailleurs.
 
 ---
 
@@ -476,5 +510,4 @@ Checklist avant de considérer le front V1 « done » :
 
 - Next sur 3000 vs backend sur 3000 ? (recommandation : front 3000, API 3001)
 - `localStorage` vs cookie httpOnly pour le JWT ?
-- Faut-il ajouter `GET /admin/associations` et `GET /associations` avant de coder l'admin et le catalogue ?
 - Design system / charte graphique ou Tailwind brut pour V1 ?

@@ -8,17 +8,23 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/types/jwt-payload.type';
 
 @Controller('associations')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class AssociationsController {
   constructor(private readonly associationsService: AssociationsService) {}
 
+  @Get()
+  findPublic() {
+    return this.associationsService.findPublicCatalog();
+  }
+
   @Get('me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ASSOCIATION)
   me(@CurrentUser() user: JwtPayload) {
     return this.associationsService.findMine(user.sub);
   }
 
   @Post('me/stripe/onboard')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ASSOCIATION)
   startStripeOnboarding(@CurrentUser() user: JwtPayload) {
     return this.associationsService.startStripeOnboarding(user.sub);

@@ -206,6 +206,7 @@ ADMIN_PASSWORD=DonNationAdmin123!
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 APP_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3000
 
 # Blockchain — DEV LOCAL (Anvil)
 BASE_SEPOLIA_RPC_URL=http://127.0.0.1:8545
@@ -252,8 +253,10 @@ Préfixe : `/api/v1`
 | POST | `/auth/register/association` | Non | Crée ASSOCIATION (PENDING) |
 | POST | `/auth/login` | Non | JWT |
 | GET | `/auth/me` | Bearer | Profil |
+| GET | `/associations` | Non | Catalogue public (APPROVED uniquement) |
 | GET | `/associations/me` | Bearer | ASSOCIATION |
 | POST | `/associations/me/stripe/onboard` | Bearer | ASSOCIATION |
+| GET | `/admin/associations` | Bearer | ADMIN (filtre `?status=PENDING`) |
 | PATCH | `/admin/associations/:id/approve` | Bearer | ADMIN |
 | PATCH | `/admin/associations/:id/suspend` | Bearer | ADMIN |
 | POST | `/donations` | Bearer | DONOR |
@@ -315,6 +318,17 @@ DONOR_TOKEN=$(curl -s -X POST "$BASE/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email":"donor@test.com","password":"password123"}' \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['accessToken'])")
+```
+
+### Lister les associations
+
+```bash
+# Catalogue public (donateur) — assos APPROVED uniquement
+curl -s "$BASE/associations"
+
+# Admin — toutes les assos, ou filtrer par statut
+curl -s "$BASE/admin/associations?status=PENDING" \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
 ### Sync on-chain (si asso approuvée avant déploiement Anvil)

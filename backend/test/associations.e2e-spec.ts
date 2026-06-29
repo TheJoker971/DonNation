@@ -73,6 +73,24 @@ describe('Associations (e2e)', () => {
     expect(response.body.slug).toBeDefined();
   });
 
+  it('lists associations for admin with optional status filter', async () => {
+    const pending = await request(app.getHttpServer())
+      .get('/api/v1/admin/associations?status=PENDING')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    expect(Array.isArray(pending.body)).toBe(true);
+    expect(pending.body.some((a: { id: string }) => a.id === associationId)).toBe(true);
+    expect(pending.body.every((a: { status: string }) => a.status === 'PENDING')).toBe(true);
+  });
+
+  it('does not expose public catalog before approval', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/associations').expect(200);
+
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.some((a: { id: string }) => a.id === associationId)).toBe(false);
+  });
+
   it('approves association as admin', async () => {
     const response = await request(app.getHttpServer())
       .patch(`/api/v1/admin/associations/${associationId}/approve`)
@@ -81,5 +99,14 @@ describe('Associations (e2e)', () => {
 
     expect(response.body.status).toBe('APPROVED');
     expect(response.body.approvedAt).toBeDefined();
+  });
+
+  it('exposes approved association in public catalog', async () => {
+    const response = await request(app.getHttpServer()).get('/api/v1/associations').expect(200);
+
+    const match = response.body.find((a: { id: string }) => a.id === associationId);
+    expect(match).toBeDefined();
+    expect(match.stripeOnboardingComplete).toBeDefined();
+    expect(match.stripeConnectAccountId).toBeUndefined();
   });
 });

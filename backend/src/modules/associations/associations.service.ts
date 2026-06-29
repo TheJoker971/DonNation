@@ -96,6 +96,28 @@ export class AssociationsService {
     return this.stripeService.createAccountLink(stripeConnectAccountId, association.id);
   }
 
+  async findPublicCatalog() {
+    const associations = await this.prisma.association.findMany({
+      where: { status: AssociationStatus.APPROVED },
+      orderBy: { name: 'asc' },
+    });
+
+    return associations.map((association) => this.toCatalogAssociation(association));
+  }
+
+  async findAllForAdmin(status?: AssociationStatus) {
+    const associations = await this.prisma.association.findMany({
+      where: status ? { status } : undefined,
+      include: { owner: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return associations.map((association) => ({
+      ...this.toPublicAssociation(association),
+      owner: this.toPublicUser(association.owner),
+    }));
+  }
+
   async findMine(ownerId: string) {
     const association = await this.prisma.association.findUnique({
       where: { ownerId },
@@ -192,6 +214,26 @@ export class AssociationsService {
       displayName: user.displayName,
       walletAddress: user.walletAddress,
       createdAt: user.createdAt,
+    };
+  }
+
+  private toCatalogAssociation(association: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    logoUrl: string | null;
+    stripeOnboardingComplete: boolean;
+    approvedAt: Date | null;
+  }) {
+    return {
+      id: association.id,
+      name: association.name,
+      slug: association.slug,
+      description: association.description,
+      logoUrl: association.logoUrl,
+      stripeOnboardingComplete: association.stripeOnboardingComplete,
+      approvedAt: association.approvedAt,
     };
   }
 
