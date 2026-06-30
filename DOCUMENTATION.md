@@ -24,6 +24,7 @@ Point d’entrée pour savoir **quel fichier lire** selon ton rôle et ta tâche
 | **[`DOCUMENTATION.md`](./DOCUMENTATION.md)** | Index de la doc (ce fichier) | Toujours en premier |
 | **[`V1_HANDOFF.md`](./V1_HANDOFF.md)** | Passation V1 : architecture, setup local (Postgres, Anvil, Stripe), variables `.env`, endpoints API, tests curl, flux complet validé, pièges connus | Reprise du backend, tests e2e, déploiement contrats, intégration Stripe |
 | **[`FRONTEND_V1.md`](./FRONTEND_V1.md)** | Spec frontend MVP : routes, auth JWT, Stripe Payment Element, pages retour Connect, ordre de dev, checklist | Développement de l’interface Next.js |
+| **[`docs/design/DESIGN.md`](./docs/design/DESIGN.md)** | Direction artistique V1 + maquettes (palette, typo, composants) | Implémentation UI / choix visuels |
 | **[`GlobalDoc.md`](./GlobalDoc.md)** | Vision produit long terme (billetterie NFT, QR, marketplace, crypto, etc.) | Comprendre la roadmap au-delà de la V1 — **ne pas confondre avec le périmètre V1 actuel** |
 
 ### Backend
