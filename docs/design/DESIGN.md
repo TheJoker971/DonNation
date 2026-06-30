@@ -15,6 +15,7 @@ Référence visuelle pour le frontend. Maquettes dans ce dossier.
 | Dashboard admin | [`donnation-admin-dashboard-mockup.png`](./donnation-admin-dashboard-mockup.png) |
 | Inscription association | [`donnation-register-association-mockup.png`](./donnation-register-association-mockup.png) |
 | Retour Stripe Connect | [`donnation-stripe-return-mockup.png`](./donnation-stripe-return-mockup.png) |
+| Refresh Stripe (session expirée) | [`donnation-stripe-refresh-mockup.png`](./donnation-stripe-refresh-mockup.png) |
 
 ---
 
@@ -102,6 +103,7 @@ Référence visuelle pour le frontend. Maquettes dans ce dossier.
 | `/admin` | Dashboard admin |
 | `/register/association` | Inscription association |
 | `/association/stripe/return` | Retour Stripe Connect |
+| `/association/stripe/refresh` | Refresh Stripe (session expirée) |
 
 Dashboard asso et admin : même DA (fond clair, cartes blanches, vert primary) — à décliner.
 
