@@ -13,6 +13,8 @@ Référence visuelle pour le frontend. Maquettes dans ce dossier.
 | Historique donateur | [`donnation-history-mockup.png`](./donnation-history-mockup.png) |
 | Dashboard association | [`donnation-association-dashboard-mockup.png`](./donnation-association-dashboard-mockup.png) |
 | Dashboard admin | [`donnation-admin-dashboard-mockup.png`](./donnation-admin-dashboard-mockup.png) |
+| Inscription association | [`donnation-register-association-mockup.png`](./donnation-register-association-mockup.png) |
+| Retour Stripe Connect | [`donnation-stripe-return-mockup.png`](./donnation-stripe-return-mockup.png) |
 
 ---
 
@@ -98,6 +100,8 @@ Référence visuelle pour le frontend. Maquettes dans ce dossier.
 | `/donations/[id]` (succès) | Confirmation + reçu |
 | `/association` | Dashboard association |
 | `/admin` | Dashboard admin |
+| `/register/association` | Inscription association |
+| `/association/stripe/return` | Retour Stripe Connect |
 
 Dashboard asso et admin : même DA (fond clair, cartes blanches, vert primary) — à décliner.
 
