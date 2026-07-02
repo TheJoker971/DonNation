@@ -5,6 +5,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { MOCK_ASSOCIATIONS } from '@/lib/mocks'
 import type { Association, CreateDonationRequest, PaymentIntentResponse } from '@/lib/types';
 import { CheckoutForm } from '@/components/CheckoutForm';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -21,6 +22,7 @@ export default function DonatePage({ params }: DonatePageProps) {
   const [association, setAssociation] = useState<Association | null>(null);
   const [amount, setAmount] = useState('50');
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [useMocks, setUseMocks] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -31,13 +33,29 @@ export default function DonatePage({ params }: DonatePageProps) {
     api<Association[]>('/associations')
       .then((items) => {
         const found = items.find((item) => item.slug === slug);
-        if (!found) {
-          setError('Association introuvable.');
-          return;
+        if (found) {
+          setAssociation(found);
+        } else {
+          // fallback to mocks if not found
+          const mockFound = MOCK_ASSOCIATIONS.find((m) => m.slug === slug);
+          if (mockFound) {
+            setAssociation(mockFound as Association);
+            setUseMocks(true);
+          } else {
+            setError('Association introuvable.');
+          }
         }
-        setAssociation(found);
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Impossible de charger l’association'))
+      .catch((err) => {
+        console.warn('associations API failed, using mocks if available', err)
+        const mockFound = MOCK_ASSOCIATIONS.find((m) => m.slug === slug);
+        if (mockFound) {
+          setAssociation(mockFound as Association);
+          setUseMocks(true);
+        } else {
+          setError(err instanceof Error ? err.message : 'Impossible de charger l’association')
+        }
+      })
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -90,9 +108,17 @@ export default function DonatePage({ params }: DonatePageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-semibold text-slate-900">Don à {association.name}</h1>
-        <p className="mt-2 text-slate-600">Montant en euros et paiement Stripe pour l’association.</p>
+      <div className="rounded-3xl border bg-white p-8 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="text-4xl">{association.logoUrl}</div>
+          <div>
+            <h1 className="text-3xl font-semibold">Don à {association.name}</h1>
+            <p className="mt-1 text-sm text-slate-600">{association.description || 'Soutenez cette association.'}</p>
+            {useMocks && (
+              <p className="mt-2 inline-block rounded-lg bg-amber-100 px-3 py-1 text-sm text-amber-800">Données de démonstration</p>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
