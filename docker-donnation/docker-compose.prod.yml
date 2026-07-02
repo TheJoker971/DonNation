@@ -38,8 +38,6 @@ services:
       args:
         NEXT_PUBLIC_API_URL: "https://yourdomain.com"
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_REPLACE_ME"
-    env_file:
-      - ../frontend/.env.local
     environment:
       NEXT_PUBLIC_API_URL: https://yourdomain.com
       NODE_ENV: production

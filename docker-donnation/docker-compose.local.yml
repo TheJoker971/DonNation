@@ -34,10 +34,8 @@ services:
       args:
         NEXT_PUBLIC_API_URL: "http://localhost:3001/api/v1"
         NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_12345"
-    env_file:
-      - ../frontend/.env.local
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: "http://localhost:3001/api/v1"
       NODE_ENV: development
     ports:
       - "3000:3000"
