@@ -33,6 +33,9 @@ services:
       dockerfile: Dockerfile
     env_file:
       - ../frontend/.env.local
+      args:
+        NEXT_PUBLIC_API_URL: "http://localhost:3001/api/v1"
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_12345"
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001
       NODE_ENV: development
