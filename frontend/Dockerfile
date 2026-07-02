@@ -3,11 +3,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Install deps (use npm ci for deterministic installs)
-COPY package*.json ./
+COPY . .
+
+# Install deps (after copying sources to ensure any local path deps resolve)
 RUN npm ci
 
-# Copy sources and build
-COPY . .
+# Build
 RUN npm run build
 
 FROM node:18-alpine AS runner
