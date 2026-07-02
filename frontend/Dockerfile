@@ -1,6 +1,7 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
-ENV NODE_ENV=production
+# Use development env during build so devDependencies (tailwind, etc.) are installed
+ENV NODE_ENV=development
 
 # Install deps (use npm ci for deterministic installs)
 COPY . .
