@@ -1,0 +1,16 @@
+.env.example
+.env.test
+.env.production
+.env.local.example
+.env.local
+.DS_Store
+.git
+npm-debug.log
+yarn-error.log
+coverage
+logs
+*.log
+Dockerfile
+docker-compose*.yml
+/.idea
+/.vscode
