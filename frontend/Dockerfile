@@ -1,7 +1,5 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
-# Use development env during build so devDependencies (tailwind, etc.) are installed
-ENV NODE_ENV=development
 
 # Allow passing build-time public envs (NEXT_PUBLIC_*) so Next can prerender during build
 ARG NEXT_PUBLIC_API_URL
@@ -9,11 +7,17 @@ ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
 
-# Install deps (use npm ci for deterministic installs)
+# Copy package files first for caching
+COPY package*.json ./
+
+# Install all deps (including dev) so build has tailwind/postcss etc.
+RUN npm ci
+
+# Copy sources
 COPY . .
 
-# Install deps (after copying sources to ensure any local path deps resolve)
-RUN npm ci
+# Ensure production mode during build for Next.js behaviour
+ENV NODE_ENV=production
 
 # Build
 RUN npm run build

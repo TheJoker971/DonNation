@@ -1,4 +1,4 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install deps (including dev for build)
@@ -8,6 +8,9 @@ RUN npm ci
 # Copy sources
 COPY . .
 
+# Ensure stale incremental build state is not reused inside Docker
+RUN rm -f tsconfig.build.tsbuildinfo
+
 # Generate Prisma client (needed for TypeScript types and runtime client)
 # ensures @prisma/client generated artifacts are available for build
 RUN npx prisma generate
@@ -15,7 +18,7 @@ RUN npx prisma generate
 # Build the app
 RUN npm run build
 
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
