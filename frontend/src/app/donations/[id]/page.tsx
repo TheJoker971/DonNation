@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
-import type { Donation } from '@/lib/types';
+import type { Donation, ReceiptResponse } from '@/lib/types';
 import { AuthGuard } from '@/components/AuthGuard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { DonationStatusBadge } from '@/components/DonationStatusBadge';
@@ -14,6 +14,7 @@ export default function DonationDetailsPage() {
   const [donation, setDonation] = useState<Donation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -42,6 +43,22 @@ export default function DonationDetailsPage() {
       }
     };
   }, [donationId]);
+
+  const downloadReceipt = async () => {
+    if (!donationId) return;
+    setDownloadingReceipt(true);
+    try {
+      const { pdfUrl } = await api<ReceiptResponse>(`/donations/${donationId}/receipt`);
+      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de télécharger le reçu');
+    } finally {
+      setDownloadingReceipt(false);
+    }
+  };
+
+  const canDownloadReceipt =
+    donation && (donation.status === 'PAID' || donation.status === 'COMPLETED' || donation.status === 'MINTING');
 
   return (
     <AuthGuard>
@@ -92,6 +109,23 @@ export default function DonationDetailsPage() {
                   <p className="mt-2 text-sm text-slate-600">ChainId : {donation.invoice.chainId}</p>
                 )}
               </div>
+
+              {canDownloadReceipt && (
+                <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
+                  <h3 className="text-sm font-semibold text-emerald-900">Reçu de donation</h3>
+                  <p className="mt-2 text-sm text-emerald-800">
+                    Téléchargez votre reçu PDF (généré à la demande si besoin).
+                  </p>
+                  <button
+                    type="button"
+                    onClick={downloadReceipt}
+                    disabled={downloadingReceipt}
+                    className="mt-4 inline-flex rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {downloadingReceipt ? 'Génération en cours...' : 'Télécharger le reçu PDF'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

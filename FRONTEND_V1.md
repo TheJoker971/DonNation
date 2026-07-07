@@ -105,11 +105,12 @@ POST /auth/register/association
 Body: {
   "email", "password",
   "name": "Croix Rouge Paris",
-  "slug": "croix-rouge-paris",   // lowercase, tirets uniquement
   "description?": "..."
 }
 → { "accessToken", "user", "association": { ... } }
 ```
+
+Le **slug public** est généré automatiquement côté backend à partir du nom (`Croix Rouge Paris` → `croix-rouge-paris`). En cas de doublon, un suffixe numérique est ajouté (`-2`, `-3`, …). Le champ `slug` reste accepté par l’API pour compatibilité tests, mais **n’est pas demandé** dans le formulaire front V1.
 
 ### Utiliser le JWT
 
@@ -149,7 +150,7 @@ Authorization: Bearer ...
 | `/` | Landing simple + CTA « Faire un don » / « Espace association » |
 | `/login` | Formulaire login (tous rôles) |
 | `/register` | Inscription **donateur** |
-| `/register/association` | Inscription **association** |
+| `/register/association` | Inscription **association** (nom, description, email, mot de passe — slug auto-généré) |
 
 ### Donateur (`role: DONOR`)
 
@@ -164,7 +165,8 @@ Authorization: Bearer ...
 
 | Route | Description |
 |-------|-------------|
-| `/association` | Dashboard : profil, statuts, actions |
+| `/association` | Dashboard : profil, logo, statuts, actions |
+| `/association/donations` | Dons reçus (liste + PDF) |
 | `/association/stripe/return` | Page succès après onboarding Stripe |
 | `/association/stripe/refresh` | Relance onboarding si lien expiré |
 
@@ -172,7 +174,7 @@ Authorization: Bearer ...
 
 | Route | Description |
 |-------|-------------|
-| `/admin` | Liste assos en attente + actions approve/suspend |
+| `/admin` | Liste assos filtrable (PENDING / APPROVED / SUSPENDED / toutes) + actions approve/suspend |
 | `/admin/associations/[id]` | Détail (optionnel V1) |
 
 ---
@@ -184,7 +186,7 @@ Authorization: Bearer ...
 **API :** `GET /associations/me`
 
 Afficher :
-- `name`, `slug`, `description`, `status`
+- `name`, `slug`, `description`, `status`, logo (`AssociationAvatar`)
 - `onChainRegistered` (badge blockchain)
 - `stripeConnectAccountId` (présent ou non)
 - `stripeOnboardingComplete` (badge « Peut recevoir des dons »)
@@ -193,8 +195,28 @@ Afficher :
 
 | Condition | Bouton | API |
 |-----------|--------|-----|
+| Toujours | « Voir les dons reçus » | lien `/association/donations` |
+| Toujours | Upload logo (JPG/PNG/WebP, max 2 Mo) | `POST /associations/me/logo` (multipart `logo`) |
 | `!stripeOnboardingComplete` | « Connecter Stripe » | `POST /associations/me/stripe/onboard` → redirect vers `response.url` |
 | `status !== APPROVED` | Message « En attente de validation admin » | — |
+
+Sans logo uploadé, afficher les **initiales** de l’association (`AssociationAvatar`).
+
+### 6.1bis Dons reçus association (`/association/donations`)
+
+**API :** `GET /associations/me/donations`
+
+- Liste des dons `PAID`, `MINTING`, `COMPLETED`
+- Donateur masqué si `isAnonymous: true`
+- Bouton « Télécharger le reçu PDF » → `GET /associations/me/donations/:id/receipt` → `{ pdfUrl }`
+
+### 6.1ter Reçu PDF donateur
+
+**API :** `GET /donations/:id/receipt` → `{ pdfUrl }`
+
+- Bouton sur `/donations/[id]` dès que le don est payé (`PAID` ou `COMPLETED`)
+- PDF généré côté backend (`pdfkit`), servi via `/uploads/receipts/{invoiceId}.pdf`
+- Contenu : association, montant, date, statut, token NFT si minté
 
 **Note :** `onChainRegistered` peut être `false` dans la réponse `approve` admin mais `true` dans `/associations/me` — faire confiance à `/associations/me`.
 
@@ -221,16 +243,31 @@ Pages minimales :
 - Message : « Session expirée »
 - Bouton « Recommencer » → `POST /associations/me/stripe/onboard`
 
-### 6.3 Admin — approuver une association
+### 6.3 Admin — gérer les associations
+
+**API :**
 
 ```http
-GET /admin/associations?status=PENDING
+GET /admin/associations                    → toutes les assos
+GET /admin/associations?status=PENDING       → filtre par statut
+GET /admin/associations?status=APPROVED
+GET /admin/associations?status=SUSPENDED
 PATCH /admin/associations/:id/approve
 PATCH /admin/associations/:id/suspend
 Authorization: Bearer <admin_token>
 ```
 
-`GET /admin/associations` retourne toutes les assos (filtrables par `status`). Chaque entrée inclut le profil `owner`.
+Chaque entrée inclut le profil `owner` (email du responsable).
+
+**UI `/admin` :**
+
+- Filtres : **En attente** | **Approuvées** | **Suspendues** | **Toutes**
+- Afficher : `name`, `slug`, `description`, `status`, `owner.email`
+- Actions contextuelles :
+  - `PENDING` → Approuver + Suspendre
+  - `APPROVED` → Suspendre
+  - `SUSPENDED` → Approuver (réactivation)
+- Message vide adapté au filtre actif
 
 ### 6.3bis Catalogue donateur (`/associations`)
 
@@ -376,7 +413,7 @@ Les endpoints suivants sont **disponibles** :
 
 | Besoin front | Endpoint |
 |--------------|----------|
-| Admin : liste assos | `GET /admin/associations?status=PENDING` (filtre optionnel) |
+| Admin : liste assos | `GET /admin/associations` ou `?status=PENDING|APPROVED|SUSPENDED` |
 | Donateur : catalogue | `GET /associations` (public, approved only) |
 | CORS navigateur | `CORS_ORIGIN` dans `backend/.env` (défaut `http://localhost:3000`) |
 
@@ -460,7 +497,7 @@ CORS : le backend accepte les requêtes depuis `CORS_ORIGIN` (défaut `http://lo
 2. **Auth** — login, register donateur, register asso
 3. **Association dashboard** — `/association` + bouton Stripe onboard
 4. **Pages retour Stripe** — return + refresh
-5. **Admin** — approve/suspend (avec endpoint liste ou UUID temporaire)
+5. **Admin** — liste filtrable + approve/suspend
 6. **Don** — création + Stripe Payment Element + page succès avec polling
 7. **Historique** — `/donations/me` + `/donations/[id]`
 8. **Polish** — erreurs, loading states, guards rôle
@@ -473,11 +510,14 @@ Checklist avant de considérer le front V1 « done » :
 
 - [ ] Inscription donateur + login
 - [ ] Inscription association + login
-- [ ] Admin approuve l'asso (depuis UI admin)
+- [ ] Admin approuve l'asso (depuis UI admin, filtre « En attente »)
+- [ ] Admin suspend une asso approuvée (filtre « Approuvées ») puis la réactive (filtre « Suspendues »)
 - [ ] Asso lance onboarding Stripe → revient sur `/association/stripe/return`
 - [ ] `stripeOnboardingComplete` passe à `true` (après webhook — `stripe listen` doit tourner)
 - [ ] Donateur crée un don 50 € et paie avec carte test `4242 4242 4242 4242`
-- [ ] Page détail affiche `COMPLETED` + `tokenId` + `txHash`
+- [ ] Asso upload un logo → visible sur le catalogue
+- [ ] Asso consulte les dons reçus sur `/association/donations`
+- [ ] Donateur télécharge le reçu PDF depuis `/donations/[id]`
 - [ ] Déconnexion + routes protégées redirigent vers login
 
 **Backend + Stripe + Anvil** doivent tourner — voir checklist dans `V1_HANDOFF.md` §10.

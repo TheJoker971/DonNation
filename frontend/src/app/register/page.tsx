@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authenticate } from '@/lib/api';
 import { useAuth, getRoleRedirect } from '@/lib/auth';
@@ -80,6 +81,13 @@ export default function RegisterPage() {
           {submitting ? 'Inscription...' : 'Créer mon compte'}
         </button>
       </form>
+
+      <p className="mt-8 border-t border-slate-200 pt-6 text-sm text-slate-600">
+        Déjà inscrit ?{' '}
+        <Link href="/login" className="font-semibold text-brand-600 hover:text-brand-700">
+          Se connecter
+        </Link>
+      </p>
     </div>
   );
 }

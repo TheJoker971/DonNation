@@ -45,7 +45,6 @@ describe('Donations (e2e)', () => {
         email: assoEmail,
         password,
         name: 'Donation Test Asso',
-        slug: `donation-asso-${Date.now()}`,
       });
     associationId = assoRegister.body.association.id as string;
 

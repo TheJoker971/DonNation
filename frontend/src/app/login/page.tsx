@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authenticate } from '@/lib/api';
 import { useAuth, getRoleRedirect } from '@/lib/auth';
@@ -68,6 +69,21 @@ export default function LoginPage() {
           {submitting ? 'Connexion...' : 'Se connecter'}
         </button>
       </form>
+
+      <div className="mt-8 space-y-2 border-t border-slate-200 pt-6 text-sm text-slate-600">
+        <p>
+          Pas encore de compte ?{' '}
+          <Link href="/register" className="font-semibold text-brand-600 hover:text-brand-700">
+            Inscription donateur
+          </Link>
+        </p>
+        <p>
+          Vous représentez une association ?{' '}
+          <Link href="/register/association" className="font-semibold text-brand-600 hover:text-brand-700">
+            Inscrire mon association
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

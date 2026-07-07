@@ -4,6 +4,7 @@ import { DonationStatus } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DonationMintService } from '../blockchain/donation-mint.service';
+import { ReceiptService } from '../documents/receipt.service';
 import { hashStripePaymentIntent } from './utils/payment-hash.util';
 
 type StripeClient = Stripe.Stripe;
@@ -28,6 +29,7 @@ export class StripeService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly donationMintService: DonationMintService,
+    private readonly receiptService: ReceiptService,
   ) {
     const secretKey = this.config.get<string>('STRIPE_SECRET_KEY');
     this.stripe = secretKey ? new Stripe(secretKey) : null;
@@ -98,7 +100,7 @@ export class StripeService {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: donation.amountEur,
       currency: 'eur',
-      payment_method_types: ['card'],
+      automatic_payment_methods: { enabled: true },
       transfer_data: {
         destination: donation.association.stripeConnectAccountId,
       },
@@ -197,6 +199,12 @@ export class StripeService {
 
     this.logger.log(`Donation ${donationId} marked as PAID`);
     await this.donationMintService.mintPaidDonation(donationId);
+
+    try {
+      await this.receiptService.ensureReceipt(donationId);
+    } catch (error) {
+      this.logger.error(`Receipt generation failed for donation ${donationId}`, error);
+    }
   }
 
   private async handleAccountUpdated(account: StripeConnectAccount) {

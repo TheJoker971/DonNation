@@ -50,7 +50,6 @@ describe('Associations (e2e)', () => {
         email: associationEmail,
         password,
         name: 'Test Association',
-        slug: `test-asso-${Date.now()}`,
         description: 'Association de test',
       })
       .expect(201);

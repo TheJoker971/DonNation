@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth'
-import { WalletConnectButton } from './WalletConnectButton'
+import { getRoleLabel } from '@/lib/roles'
 
 const navItems = [
   { href: '/', label: 'Accueil' },
@@ -32,46 +32,50 @@ export function Header() {
               className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
                 pathname === item.href
                   ? 'bg-brand-50 text-brand-700'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               {item.label}
             </Link>
           ))}
 
-          {isAuthenticated ? (
+          {isAuthenticated && user ? (
             <>
-              {user?.role === 'ADMIN' && (
+              <div className="hidden items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 md:flex">
+                <span className="text-sm font-medium text-slate-900">{user.email}</span>
+                <span className="badge badge-success text-xs">{getRoleLabel(user.role)}</span>
+              </div>
+
+              {user.role === 'ADMIN' && (
                 <Link href="/admin" className="btn-primary">
                   Admin
                 </Link>
               )}
-              {user?.role === 'ASSOCIATION' && (
+              {user.role === 'ASSOCIATION' && (
                 <Link href="/association" className="btn-primary">
-                  Association
+                  Mon espace
                 </Link>
               )}
-              {user?.role === 'DONOR' && (
+              {user.role === 'DONOR' && (
                 <Link href="/donations" className="btn-primary">
                   Mes dons
                 </Link>
               )}
-              <button
-                type="button"
-                onClick={logout}
-                className="btn-secondary"
-              >
+
+              <button type="button" onClick={logout} className="btn-secondary">
                 Déconnexion
               </button>
             </>
           ) : (
             <>
-              <WalletConnectButton />
               <Link href="/login" className="btn-secondary">
                 Connexion
               </Link>
               <Link href="/register" className="btn-secondary">
                 Inscription
+              </Link>
+              <Link href="/register/association" className="btn-primary">
+                Espace association
               </Link>
             </>
           )}
@@ -80,4 +84,3 @@ export function Header() {
     </header>
   )
 }
-

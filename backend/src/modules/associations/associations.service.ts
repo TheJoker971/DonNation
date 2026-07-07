@@ -1,12 +1,16 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AssociationStatus, Role } from '@prisma/client';
+import { AssociationStatus, DonationStatus, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { mkdirSync, writeFileSync } from 'fs';
+import { extname, join } from 'path';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterAssociationDto } from './dto/register-association.dto';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { StripeService } from '../payments/stripe.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
+import { buildUniqueSlug, slugify } from './utils/slug.util';
 
 @Injectable()
 export class AssociationsService {
@@ -18,6 +22,7 @@ export class AssociationsService {
     private readonly jwtService: JwtService,
     private readonly stripeService: StripeService,
     private readonly blockchainService: BlockchainService,
+    private readonly config: ConfigService,
   ) {}
 
   async register(dto: RegisterAssociationDto) {
@@ -26,10 +31,7 @@ export class AssociationsService {
       throw new ConflictException('Email already in use');
     }
 
-    const slugTaken = await this.prisma.association.findUnique({ where: { slug: dto.slug } });
-    if (slugTaken) {
-      throw new ConflictException('Association slug already in use');
-    }
+    const slug = await this.resolveRegistrationSlug(dto);
 
     const passwordHash = await bcrypt.hash(dto.password, this.saltRounds);
 
@@ -47,7 +49,7 @@ export class AssociationsService {
         data: {
           ownerId: user.id,
           name: dto.name,
-          slug: dto.slug,
+          slug,
           description: dto.description,
           status: AssociationStatus.PENDING,
         },
@@ -175,6 +177,98 @@ export class AssociationsService {
     await this.syncAssociationOnChain(associationId, status);
 
     return this.toPublicAssociation(updated);
+  }
+
+  async findReceivedDonations(ownerId: string) {
+    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    if (!association) {
+      throw new NotFoundException('Association not found for this account');
+    }
+
+    const donations = await this.prisma.donation.findMany({
+      where: {
+        associationId: association.id,
+        status: { in: [DonationStatus.PAID, DonationStatus.MINTING, DonationStatus.COMPLETED] },
+      },
+      include: {
+        donor: { select: { email: true, displayName: true } },
+        invoice: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return donations.map((donation) => ({
+      id: donation.id,
+      amountEur: donation.amountEur,
+      pointsEarned: donation.pointsEarned,
+      isAnonymous: donation.isAnonymous,
+      status: donation.status,
+      createdAt: donation.createdAt,
+      donor: donation.isAnonymous
+        ? null
+        : {
+            displayName: donation.donor.displayName,
+            email: donation.donor.email,
+          },
+      invoice: donation.invoice
+        ? {
+            id: donation.invoice.id,
+            status: donation.invoice.status,
+            tokenId: donation.invoice.tokenId,
+            pdfUrl: donation.invoice.pdfUrl,
+          }
+        : null,
+    }));
+  }
+
+  async updateLogo(ownerId: string, file: Express.Multer.File) {
+    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    if (!association) {
+      throw new NotFoundException('Association not found for this account');
+    }
+
+    const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
+    const extension = extname(file.originalname).toLowerCase();
+    if (!allowed.includes(extension)) {
+      throw new BadRequestException('Logo must be JPG, PNG or WebP');
+    }
+
+    const logosDir = join(process.cwd(), 'uploads', 'logos');
+    mkdirSync(logosDir, { recursive: true });
+
+    const filename = `${association.id}${extension}`;
+    const filePath = join(logosDir, filename);
+    writeFileSync(filePath, file.buffer);
+
+    const logoUrl = `${this.getPublicBaseUrl()}/uploads/logos/${filename}`;
+    const updated = await this.prisma.association.update({
+      where: { id: association.id },
+      data: { logoUrl },
+    });
+
+    return this.toPublicAssociation(updated);
+  }
+
+  private getPublicBaseUrl(): string {
+    return (
+      this.config.get<string>('BACKEND_PUBLIC_URL') ??
+      `http://localhost:${this.config.get<number>('PORT', 3000)}`
+    );
+  }
+
+  private async resolveRegistrationSlug(dto: RegisterAssociationDto): Promise<string> {
+    const base = slugify(dto.name);
+
+    if (base.length < 2) {
+      throw new BadRequestException('Association name must contain enough characters to generate a public URL');
+    }
+
+    const existing = await this.prisma.association.findMany({
+      where: { slug: { startsWith: base } },
+      select: { slug: true },
+    });
+
+    return buildUniqueSlug(base, new Set(existing.map((association) => association.slug)));
   }
 
   private async syncAssociationOnChain(associationId: string, status: AssociationStatus) {

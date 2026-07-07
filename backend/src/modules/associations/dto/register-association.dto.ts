@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class RegisterAssociationDto {
   @IsEmail()
@@ -11,12 +11,6 @@ export class RegisterAssociationDto {
   @IsString()
   @MinLength(2)
   name: string;
-
-  @IsString()
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'slug must be lowercase alphanumeric with hyphens (e.g. croix-rouge-paris)',
-  })
-  slug: string;
 
   @IsOptional()
   @IsString()

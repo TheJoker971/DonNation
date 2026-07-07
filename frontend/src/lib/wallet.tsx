@@ -1,5 +1,6 @@
  'use client'
 
+// V1 : wallet désactivé (non branché au backend). Réactiver via WalletProvider dans layout.tsx.
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 interface WalletContextType {

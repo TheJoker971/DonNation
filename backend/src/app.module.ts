@@ -7,6 +7,7 @@ import { AssociationsModule } from './modules/associations/associations.module';
 import { DonationsModule } from './modules/donations/donations.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { BlockchainModule } from './modules/blockchain/blockchain.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { BlockchainModule } from './modules/blockchain/blockchain.module';
     DonationsModule,
     PaymentsModule,
     BlockchainModule,
-    // Phase 8+: metadata, documents
+    DocumentsModule,
     // Phase 9+: admin dashboards
   ],
 })

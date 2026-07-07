@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { DonationsService } from './donations.service';
 import { DonationsController } from './donations.controller';
 import { PaymentsModule } from '../payments/payments.module';
+import { DocumentsModule } from '../documents/documents.module';
 
 @Module({
-  imports: [PaymentsModule],
+  imports: [PaymentsModule, DocumentsModule],
   controllers: [DonationsController],
   providers: [DonationsService],
   exports: [DonationsService],

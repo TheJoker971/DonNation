@@ -34,7 +34,10 @@ export default function DonationsPage() {
           <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-rose-700 shadow-sm">{error}</div>
         ) : donations.length === 0 ? (
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-slate-700 shadow-sm">
-            Aucun don trouvé. Visitez le catalogue pour faire un don.
+            Aucun don pour le moment.{' '}
+            <Link href="/associations" className="font-semibold text-brand-600 hover:text-brand-700">
+              Parcourir les associations
+            </Link>
           </div>
         ) : (
           <div className="grid gap-6">

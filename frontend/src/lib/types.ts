@@ -29,7 +29,6 @@ export interface RegisterAssociationRequest {
   email: string;
   password: string;
   name: string;
-  slug: string;
   description?: string;
 }
 
@@ -88,6 +87,29 @@ export interface Invoice {
   status: 'PENDING' | 'MINTED' | 'FAILED';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ReceivedDonation {
+  id: string;
+  amountEur: number;
+  pointsEarned: number;
+  isAnonymous: boolean;
+  status: 'PAID' | 'MINTING' | 'COMPLETED' | 'FAILED';
+  createdAt: string;
+  donor: {
+    displayName?: string | null;
+    email: string;
+  } | null;
+  invoice: {
+    id: string;
+    status: 'PENDING' | 'MINTED' | 'FAILED';
+    tokenId?: number | null;
+    pdfUrl?: string | null;
+  } | null;
+}
+
+export interface ReceiptResponse {
+  pdfUrl: string;
 }
 
 export interface PaymentIntentResponse {

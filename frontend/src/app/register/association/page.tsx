@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useMemo, useState, FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authenticate } from '@/lib/api';
 import { useAuth, getRoleRedirect } from '@/lib/auth';
-import type { RegisterAssociationRequest } from '@/lib/types';
+import { slugify } from '@/lib/slugify';
 
 export default function RegisterAssociationPage() {
   const router = useRouter();
@@ -12,10 +13,11 @@ export default function RegisterAssociationPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const slugPreview = useMemo(() => slugify(name), [name]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,9 +29,8 @@ export default function RegisterAssociationPage() {
         email,
         password,
         name,
-        slug,
         description,
-      } as RegisterAssociationRequest);
+      });
       login(auth);
       router.push(getRoleRedirect(auth.user.role));
     } catch (err) {
@@ -54,20 +55,11 @@ export default function RegisterAssociationPage() {
             required
             className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
-        </div>
-
-        <div className="space-y-3">
-          <label className="block text-sm font-semibold text-slate-700">Slug public</label>
-          <input
-            type="text"
-            value={slug}
-            onChange={(event) => setSlug(event.target.value)}
-            required
-            pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
-            title="Minuscule, lettres, chiffres et tirets uniquement"
-            className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-          />
-          <p className="text-sm text-slate-500">Exemple : croix-rouge-paris</p>
+          {slugPreview && (
+            <p className="text-sm text-slate-500">
+              Adresse publique : <span className="font-medium text-slate-700">{slugPreview}</span>
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -113,6 +105,17 @@ export default function RegisterAssociationPage() {
           {submitting ? 'Inscription...' : 'Soumettre ma demande'}
         </button>
       </form>
+
+      <p className="mt-8 border-t border-slate-200 pt-6 text-sm text-slate-600">
+        Vous êtes un donateur ?{' '}
+        <Link href="/register" className="font-semibold text-brand-600 hover:text-brand-700">
+          Inscription donateur
+        </Link>
+        {' · '}
+        <Link href="/login" className="font-semibold text-brand-600 hover:text-brand-700">
+          Connexion
+        </Link>
+      </p>
     </div>
   );
 }

@@ -6,11 +6,13 @@ import { AssociationsController } from './associations.controller';
 import { AdminAssociationsController } from './admin-associations.controller';
 import { PaymentsModule } from '../payments/payments.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
+import { DocumentsModule } from '../documents/documents.module';
 
 @Module({
   imports: [
     PaymentsModule,
     BlockchainModule,
+    DocumentsModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

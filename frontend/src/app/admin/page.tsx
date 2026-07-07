@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { Association } from '@/lib/types';
 import { AuthGuard } from '@/components/AuthGuard';
@@ -8,16 +8,35 @@ import { RoleGuard } from '@/components/RoleGuard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { AssociationStatusBadge } from '@/components/AssociationStatusBadge';
 
+type AdminFilter = 'PENDING' | 'APPROVED' | 'SUSPENDED' | 'ALL';
+
+const FILTERS: { value: AdminFilter; label: string }[] = [
+  { value: 'PENDING', label: 'En attente' },
+  { value: 'APPROVED', label: 'Approuvées' },
+  { value: 'SUSPENDED', label: 'Suspendues' },
+  { value: 'ALL', label: 'Toutes' },
+];
+
+const EMPTY_MESSAGES: Record<AdminFilter, string> = {
+  PENDING: 'Aucune association en attente.',
+  APPROVED: 'Aucune association approuvée.',
+  SUSPENDED: 'Aucune association suspendue.',
+  ALL: 'Aucune association enregistrée.',
+};
+
 export default function AdminPage() {
+  const [filter, setFilter] = useState<AdminFilter>('PENDING');
   const [associations, setAssociations] = useState<Association[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [acting, setActing] = useState(false);
 
-  const fetchAssociations = async () => {
+  const fetchAssociations = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api<Association[]>('/admin/associations?status=PENDING');
+      const path =
+        filter === 'ALL' ? '/admin/associations' : `/admin/associations?status=${filter}`;
+      const data = await api<Association[]>(path);
       setAssociations(data);
       setError(null);
     } catch (err) {
@@ -25,11 +44,11 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     fetchAssociations();
-  }, []);
+  }, [fetchAssociations]);
 
   const updateStatus = async (id: string, action: 'approve' | 'suspend') => {
     setActing(true);
@@ -43,13 +62,38 @@ export default function AdminPage() {
     }
   };
 
+  const canApprove = (status?: Association['status']) =>
+    status === 'PENDING' || status === 'SUSPENDED';
+
+  const canSuspend = (status?: Association['status']) =>
+    status === 'PENDING' || status === 'APPROVED';
+
   return (
     <AuthGuard>
       <RoleGuard allowedRoles={['ADMIN']}>
         <div className="space-y-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h1 className="text-3xl font-semibold text-slate-900">Admin associations</h1>
-            <p className="mt-2 text-slate-600">Approuvez ou suspendez les associations en attente.</p>
+            <h1 className="text-3xl font-semibold text-slate-900">Gestion des associations</h1>
+            <p className="mt-2 text-slate-600">
+              Approuvez les demandes en attente ou suspendez les associations actives.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              {FILTERS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setFilter(value)}
+                  className={`rounded-2xl px-4 py-2 text-sm font-semibold transition-colors ${
+                    filter === value
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {loading ? (
@@ -57,7 +101,9 @@ export default function AdminPage() {
           ) : error ? (
             <div className="rounded-3xl border border-rose-200 bg-rose-50 p-8 text-rose-700 shadow-sm">{error}</div>
           ) : associations.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-slate-700 shadow-sm">Aucune association en attente.</div>
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-slate-700 shadow-sm">
+              {EMPTY_MESSAGES[filter]}
+            </div>
           ) : (
             <div className="grid gap-6">
               {associations.map((association) => (
@@ -68,27 +114,32 @@ export default function AdminPage() {
                       <p className="mt-2 text-sm text-slate-600">{association.description || 'Sans description'}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                         <span>Slug : {association.slug}</span>
+                        {association.owner?.email && <span>Responsable : {association.owner.email}</span>}
                         <AssociationStatusBadge status={association.status ?? 'PENDING'} />
                       </div>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        disabled={acting}
-                        onClick={() => updateStatus(association.id, 'approve')}
-                        className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        Approuver
-                      </button>
-                      <button
-                        type="button"
-                        disabled={acting}
-                        onClick={() => updateStatus(association.id, 'suspend')}
-                        className="rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        Suspendre
-                      </button>
+                      {canApprove(association.status) && (
+                        <button
+                          type="button"
+                          disabled={acting}
+                          onClick={() => updateStatus(association.id, 'approve')}
+                          className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Approuver
+                        </button>
+                      )}
+                      {canSuspend(association.status) && (
+                        <button
+                          type="button"
+                          disabled={acting}
+                          onClick={() => updateStatus(association.id, 'suspend')}
+                          className="rounded-2xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Suspendre
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
