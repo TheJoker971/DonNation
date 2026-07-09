@@ -12,12 +12,20 @@ type StripeWebhookEvent = ReturnType<StripeClient['webhooks']['constructEvent']>
 type StripePaymentIntent = StripeWebhookEvent['data']['object'] & {
   id: string;
   metadata?: { donationId?: string };
+  payment_method_types?: string[];
 };
 type StripeConnectAccount = StripeWebhookEvent['data']['object'] & {
   id: string;
   charges_enabled?: boolean;
   details_submitted?: boolean;
   metadata?: { associationId?: string };
+  capabilities?: { crypto_payments?: string };
+};
+
+type ConnectCapabilities = {
+  card_payments: { requested: boolean };
+  transfers: { requested: boolean };
+  crypto_payments?: { requested: boolean };
 };
 
 @Injectable()
@@ -42,29 +50,64 @@ export class StripeService {
     return this.stripe;
   }
 
+  isCryptoPaymentsEnabled(): boolean {
+    return this.config.get<string>('STRIPE_CRYPTO_PAYMENTS_ENABLED', 'true') !== 'false';
+  }
+
   async createConnectAccount(associationId: string, email: string): Promise<string> {
     const stripe = this.requireStripe();
+
+    const capabilities: ConnectCapabilities = {
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    };
+
+    if (this.isCryptoPaymentsEnabled()) {
+      capabilities.crypto_payments = { requested: true };
+    }
 
     const account = await stripe.accounts.create({
       type: 'express',
       country: 'FR',
       email,
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
-      },
+      capabilities,
       metadata: { associationId },
     });
 
     return account.id;
   }
 
+  async requestCryptoPaymentsCapability(stripeAccountId: string): Promise<boolean> {
+    if (!this.isCryptoPaymentsEnabled()) {
+      return false;
+    }
+
+    const stripe = this.requireStripe();
+
+    try {
+      const capability = await stripe.accounts.updateCapability(
+        stripeAccountId,
+        'crypto_payments',
+        { requested: true },
+      );
+      return capability.status === 'active';
+    } catch (error) {
+      this.logger.warn(
+        `Could not request crypto_payments for account ${stripeAccountId}`,
+        error instanceof Error ? error.message : error,
+      );
+      return false;
+    }
+  }
+
   async createAccountLink(
     stripeAccountId: string,
-    associationId: string,
+    _associationId: string,
   ): Promise<{ url: string }> {
     const stripe = this.requireStripe();
     const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
+
+    await this.requestCryptoPaymentsCapability(stripeAccountId);
 
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
@@ -97,12 +140,18 @@ export class StripeService {
       throw new BadRequestException('Association Stripe onboarding is not complete');
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const connectAccountId = donation.association.stripeConnectAccountId;
+    const cryptoRequested = this.isCryptoPaymentsEnabled();
+
+    if (cryptoRequested) {
+      await this.requestCryptoPaymentsCapability(connectAccountId);
+    }
+
+    const baseParams = {
       amount: donation.amountEur,
-      currency: 'eur',
-      automatic_payment_methods: { enabled: true },
+      currency: 'eur' as const,
       transfer_data: {
-        destination: donation.association.stripeConnectAccountId,
+        destination: connectAccountId,
       },
       metadata: {
         donationId: donation.id,
@@ -110,7 +159,33 @@ export class StripeService {
         associationId: donation.association.id,
       },
       description: `Donation to ${donation.association.name}`,
-    });
+    };
+
+    const paymentMethodTypes = cryptoRequested ? (['card', 'crypto'] as const) : (['card'] as const);
+
+    let paymentIntent: Awaited<ReturnType<StripeClient['paymentIntents']['create']>>;
+    let cryptoAvailable = cryptoRequested;
+
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        ...baseParams,
+        payment_method_types: [...paymentMethodTypes],
+      });
+    } catch (error) {
+      if (!cryptoRequested) {
+        throw error;
+      }
+
+      this.logger.warn(
+        'PaymentIntent with crypto failed, falling back to card only',
+        error instanceof Error ? error.message : error,
+      );
+      cryptoAvailable = false;
+      paymentIntent = await stripe.paymentIntents.create({
+        ...baseParams,
+        payment_method_types: ['card'],
+      });
+    }
 
     await this.prisma.donation.update({
       where: { id: donation.id },
@@ -120,6 +195,7 @@ export class StripeService {
     return {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      paymentMethods: cryptoAvailable ? (['card', 'crypto'] as const) : (['card'] as const),
     };
   }
 
@@ -178,6 +254,12 @@ export class StripeService {
       return;
     }
 
+    const paymentMethodTypes = paymentIntent.payment_method_types ?? [];
+    const paidWithCrypto = paymentMethodTypes.includes('crypto');
+    this.logger.log(
+      `Donation ${donationId} paid via ${paidWithCrypto ? 'USDC (crypto)' : 'card'} (${paymentIntent.id})`,
+    );
+
     const externalPaymentIdHash = hashStripePaymentIntent(paymentIntent.id);
 
     await this.prisma.$transaction(async (tx) => {
@@ -214,10 +296,14 @@ export class StripeService {
     }
 
     const onboardingComplete = Boolean(account.charges_enabled && account.details_submitted);
+    const cryptoActive = account.capabilities?.crypto_payments === 'active';
 
     await this.prisma.association.updateMany({
       where: { id: associationId, stripeConnectAccountId: account.id },
-      data: { stripeOnboardingComplete: onboardingComplete },
+      data: {
+        stripeOnboardingComplete: onboardingComplete,
+        stripeCryptoPaymentsActive: cryptoActive,
+      },
     });
   }
 }

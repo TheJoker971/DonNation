@@ -47,6 +47,7 @@ export interface Association {
   status?: 'PENDING' | 'APPROVED' | 'SUSPENDED';
   stripeConnectAccountId?: string | null;
   stripeOnboardingComplete?: boolean;
+  stripeCryptoPaymentsActive?: boolean;
   onChainRegistered?: boolean;
   approvedAt?: string | null;
   createdAt?: string;
@@ -115,6 +116,7 @@ export interface ReceiptResponse {
 export interface PaymentIntentResponse {
   clientSecret: string;
   paymentIntentId: string;
+  paymentMethods?: ('card' | 'crypto')[];
 }
 
 export interface AuthState {

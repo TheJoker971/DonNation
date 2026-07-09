@@ -29,6 +29,7 @@ export default function DonatePage({ params }: DonatePageProps) {
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [donationId, setDonationId] = useState<string | null>(null);
+  const [cryptoAvailable, setCryptoAvailable] = useState(false);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function DonatePage({ params }: DonatePageProps) {
       });
 
       setClientSecret(paymentResponse.clientSecret);
+      setCryptoAvailable(paymentResponse.paymentMethods?.includes('crypto') ?? false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de créer le don.');
     } finally {
@@ -181,10 +183,18 @@ export default function DonatePage({ params }: DonatePageProps) {
         {hasPaymentSection && (
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Paiement sécurisé</h2>
-            <p className="mt-2 text-sm text-slate-600">Paiement par carte via Stripe.</p>
+            <p className="mt-2 text-sm text-slate-600">
+              {cryptoAvailable
+                ? 'Carte bancaire ou USDC via Stripe. L’association reçoit le montant en euros sur son compte Connect.'
+                : 'Paiement par carte via Stripe.'}
+            </p>
             <div className="mt-6">
               <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <CheckoutForm clientSecret={clientSecret} donationId={donationId} />
+                <CheckoutForm
+                  clientSecret={clientSecret}
+                  donationId={donationId}
+                  cryptoAvailable={cryptoAvailable}
+                />
               </Elements>
             </div>
           </div>

@@ -103,6 +103,9 @@ export default function AssociationDashboardPage() {
                   <p>Status : <AssociationStatusBadge status={association.status ?? 'PENDING'} /></p>
                   <p>On-chain : <span className="font-medium">{association.onChainRegistered ? 'Oui' : 'Non'}</span></p>
                   <p>Stripe prête : <span className="font-medium">{association.stripeOnboardingComplete ? 'Oui' : 'Non'}</span></p>
+                  <p className="text-xs text-slate-500">
+                    Les dons arrivent en euros sur votre compte Stripe, que le donateur paie par carte ou en crypto.
+                  </p>
                 </div>
 
                 <div className="mt-6">

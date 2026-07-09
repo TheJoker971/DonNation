@@ -7,9 +7,10 @@ import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 interface CheckoutFormProps {
   clientSecret: string;
   donationId: string;
+  cryptoAvailable?: boolean;
 }
 
-export function CheckoutForm({ clientSecret, donationId }: CheckoutFormProps) {
+export function CheckoutForm({ clientSecret, donationId, cryptoAvailable = false }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -61,9 +62,16 @@ export function CheckoutForm({ clientSecret, donationId }: CheckoutFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="space-y-2">
         <label className="block text-sm font-semibold text-slate-700">Détails de paiement</label>
+        {cryptoAvailable && (
+          <p className="text-sm text-slate-600">
+            Choisissez carte bancaire ou USDC. Pour l&apos;USDC, Stripe vous redirige vers un portefeuille
+            (MetaMask, Phantom, etc.) — aucun wallet n&apos;est géré par DonNation.
+          </p>
+        )}
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <PaymentElement
             options={{
+              layout: cryptoAvailable ? 'tabs' : 'accordion',
               wallets: { applePay: 'never', googlePay: 'never' },
             }}
           />

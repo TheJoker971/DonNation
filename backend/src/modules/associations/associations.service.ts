@@ -318,6 +318,7 @@ export class AssociationsService {
     description: string | null;
     logoUrl: string | null;
     stripeOnboardingComplete: boolean;
+    stripeCryptoPaymentsActive: boolean;
     approvedAt: Date | null;
   }) {
     return {
@@ -327,6 +328,7 @@ export class AssociationsService {
       description: association.description,
       logoUrl: association.logoUrl,
       stripeOnboardingComplete: association.stripeOnboardingComplete,
+      stripeCryptoPaymentsActive: association.stripeCryptoPaymentsActive,
       approvedAt: association.approvedAt,
     };
   }
@@ -340,6 +342,7 @@ export class AssociationsService {
     status: AssociationStatus;
     stripeConnectAccountId: string | null;
     stripeOnboardingComplete: boolean;
+    stripeCryptoPaymentsActive: boolean;
     onChainRegistered: boolean;
     approvedAt: Date | null;
     createdAt: Date;
@@ -354,6 +357,7 @@ export class AssociationsService {
       status: association.status,
       stripeConnectAccountId: association.stripeConnectAccountId,
       stripeOnboardingComplete: association.stripeOnboardingComplete,
+      stripeCryptoPaymentsActive: association.stripeCryptoPaymentsActive,
       onChainRegistered: association.onChainRegistered,
       approvedAt: association.approvedAt,
       createdAt: association.createdAt,
