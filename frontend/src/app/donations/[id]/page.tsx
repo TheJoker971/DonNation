@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import type { Donation, ReceiptResponse } from '@/lib/types';
-import { formatEurDetailed, truncateHash } from '@/lib/format';
-import { getTxExplorerUrl } from '@/lib/blockchain';
+import { formatEurDetailed } from '@/lib/format';
 import { AuthGuard } from '@/components/AuthGuard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { DonationStatusBadge } from '@/components/DonationStatusBadge';
@@ -67,11 +66,6 @@ export default function DonationDetailsPage() {
     donation &&
     (donation.status === 'PAID' || donation.status === 'COMPLETED' || donation.status === 'MINTING');
 
-  const explorerUrl =
-    donation?.invoice?.txHash && donation.invoice.chainId
-      ? getTxExplorerUrl(donation.invoice.chainId, donation.invoice.txHash)
-      : null;
-
   return (
     <AuthGuard>
       <div className="space-y-6">
@@ -85,7 +79,7 @@ export default function DonationDetailsPage() {
 
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-semibold text-slate-900">Confirmation de don</h1>
-          <p className="mt-2 text-slate-600">Suivi du paiement, du reçu certifié et de la preuve on-chain.</p>
+          <p className="mt-2 text-slate-600">Suivi de votre donation et téléchargement du reçu.</p>
         </div>
 
         {loading ? (
@@ -120,24 +114,19 @@ export default function DonationDetailsPage() {
                 </div>
               </div>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  {
-                    label: 'Date',
-                    value: new Date(donation.createdAt).toLocaleString('fr-FR'),
-                  },
-                  { label: 'Points gagnés', value: `+${donation.pointsEarned}` },
-                  { label: 'Anonyme', value: donation.isAnonymous ? 'Oui' : 'Non' },
-                  {
-                    label: 'Wallet donateur',
-                    value: donation.donorWallet ? truncateHash(donation.donorWallet, 6, 4) : 'Non renseigné',
-                  },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-2xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.label}</p>
-                    <p className="mt-2 text-sm font-medium text-slate-800">{item.value}</p>
-                  </div>
-                ))}
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Date</p>
+                  <p className="mt-2 text-sm font-medium text-slate-800">
+                    {new Date(donation.createdAt).toLocaleString('fr-FR')}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Anonyme</p>
+                  <p className="mt-2 text-sm font-medium text-slate-800">
+                    {donation.isAnonymous ? 'Oui' : 'Non'}
+                  </p>
+                </div>
               </div>
             </section>
 
@@ -145,10 +134,16 @@ export default function DonationDetailsPage() {
               <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-8 shadow-sm">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-emerald-900">Reçu PDF</h3>
+                    <h3 className="text-lg font-semibold text-emerald-900">Reçu de donation</h3>
                     <p className="mt-2 text-sm text-emerald-800">
-                      Téléchargez votre reçu officiel de donation, généré après validation du paiement.
+                      Téléchargez votre reçu PDF officiel. Les informations détaillées de certification
+                      (blockchain) y figurent.
                     </p>
+                    {donation.status === 'MINTING' && (
+                      <p className="mt-2 text-sm text-amber-700">
+                        Finalisation en cours — le reçu peut être mis à jour automatiquement.
+                      </p>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -162,57 +157,11 @@ export default function DonationDetailsPage() {
               </section>
             )}
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-xl">
-                  ⛓
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-semibold text-slate-900">Reçu certifié on-chain</h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Preuve immuable enregistrée sur la blockchain — garantie d&apos;intégrité de votre don.
-                  </p>
-
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase text-slate-500">Statut mint</p>
-                      <p className="mt-2 font-medium text-slate-800">{donation.invoice?.status || 'En attente'}</p>
-                    </div>
-                    {donation.invoice?.tokenId != null && (
-                      <div className="rounded-2xl bg-slate-50 p-4">
-                        <p className="text-xs font-semibold uppercase text-slate-500">Token ID</p>
-                        <p className="mt-2 font-medium text-slate-800">#{donation.invoice.tokenId}</p>
-                      </div>
-                    )}
-                    {donation.invoice?.receiptHash && (
-                      <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-2">
-                        <p className="text-xs font-semibold uppercase text-slate-500">Hash du reçu</p>
-                        <p className="mt-2 break-all font-mono text-sm text-slate-700">
-                          {truncateHash(donation.invoice.receiptHash, 12, 8)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {explorerUrl && (
-                    <a
-                      href={explorerUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-flex text-sm font-semibold text-brand-600 hover:text-brand-700"
-                    >
-                      Voir la transaction sur l&apos;explorateur →
-                    </a>
-                  )}
-
-                  {donation.status === 'MINTING' && (
-                    <p className="mt-4 text-sm text-amber-700">
-                      Mint en cours… cette page se met à jour automatiquement.
-                    </p>
-                  )}
-                </div>
+            {donation.status === 'PENDING' && (
+              <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
+                Paiement en attente. Finalisez le règlement pour obtenir votre reçu.
               </div>
-            </section>
+            )}
           </div>
         )}
       </div>

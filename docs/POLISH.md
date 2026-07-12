@@ -23,8 +23,8 @@ Suivi des améliorations UX / parcours utilisateur pour la soutenance.
 
 - [x] Page profil association `/associations/[slug]` (hero, mission, stats, CTA, transparence)
 - [x] Catalogue + landing : cartes enrichies → lien profil + stats
-- [x] Historique `/donations` : bandeau stats + cartes riches + niveau
-- [x] Détail don `/donations/[id]` : reçu PDF, certificat on-chain, points, explorer
+- [x] Historique `/donations` : liste des dons (fidélité masquée UI)
+- [x] Détail don `/donations/[id]` : reçu PDF, infos essentielles (blockchain dans PDF uniquement)
 - [x] Page don : fil d'Ariane retour profil asso + fetch profil dédié
 
 ---
@@ -38,11 +38,16 @@ Suivi des améliorations UX / parcours utilisateur pour la soutenance.
 
 ---
 
-## Polish global
+## Polish global (Phase B — V2)
 
-- [x] Landing : copy pro, parcours 3 étapes mis à jour (sans emojis)
-- [x] Copy « reçu certifié on-chain » (pas jargon NFT agressif)
-- [ ] Header : améliorations mineures (optionnel)
+- [x] Header : retirer inscription / espace asso de la top bar
+- [x] Fidélité masquée frontend (historique + détail don)
+- [x] Détail don : blockchain cachée UI (reste dans PDF)
+- [x] PDF reçu : layout pro + bloc blockchain
+- [x] Auth donateur : Google custodial + MetaMask
+- [x] Reset mot de passe email (asso + admin)
+- [x] Dashboard asso : preview profil public + édition description
+- [x] Docker dev unifié + CI + doc AUTH
 
 ---
 

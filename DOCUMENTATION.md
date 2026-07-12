@@ -8,9 +8,9 @@ Point d’entrée pour savoir **quel fichier lire** selon ton rôle et ta tâche
 
 | Tu es… | Lis en priorité |
 |--------|-----------------|
-| **Nouveau sur le repo** | Ce fichier → [`V1_HANDOFF.md`](./V1_HANDOFF.md) |
-| **Développeur frontend** | [`FRONTEND_V1.md`](./FRONTEND_V1.md) → [`V1_HANDOFF.md`](./V1_HANDOFF.md) (API, env, tests) |
-| **Développeur backend / blockchain** | [`V1_HANDOFF.md`](./V1_HANDOFF.md) |
+| **Nouveau sur le repo** | [`README.md`](./README.md) → [`V1_HANDOFF.md`](./V1_HANDOFF.md) |
+| **Développeur frontend** | [`docs/POLISH.md`](./docs/POLISH.md) → [`docs/AUTH.md`](./docs/AUTH.md) → [`V1_HANDOFF.md`](./V1_HANDOFF.md) |
+| **Développeur backend / blockchain** | [`V1_HANDOFF.md`](./V1_HANDOFF.md) → [`docs/AUTH.md`](./docs/AUTH.md) |
 | **Product / vision long terme** | [`GlobalDoc.md`](./GlobalDoc.md) |
 
 ---
@@ -21,57 +21,46 @@ Point d’entrée pour savoir **quel fichier lire** selon ton rôle et ta tâche
 
 | Fichier | Contenu | Quand le lire |
 |---------|---------|---------------|
+| **[`README.md`](./README.md)** | Quickstart (6 terminaux + Docker) | Premier lancement |
 | **[`DOCUMENTATION.md`](./DOCUMENTATION.md)** | Index de la doc (ce fichier) | Toujours en premier |
-| **[`V1_HANDOFF.md`](./V1_HANDOFF.md)** | Passation V1 : architecture, setup local (Postgres, Anvil, Stripe), variables `.env`, endpoints API, tests curl, flux complet validé, pièges connus | Reprise du backend, tests e2e, déploiement contrats, intégration Stripe |
-| **[`FRONTEND_V1.md`](./FRONTEND_V1.md)** | Spec frontend MVP : routes, auth JWT, Stripe Payment Element, pages retour Connect, ordre de dev, checklist | Développement de l’interface Next.js |
-| **[`docs/design/DESIGN.md`](./docs/design/DESIGN.md)** | Direction artistique V1 + maquettes (palette, typo, composants) | Implémentation UI / choix visuels |
-| **[`GlobalDoc.md`](./GlobalDoc.md)** | Vision produit long terme (billetterie NFT, QR, marketplace, crypto, etc.) | Comprendre la roadmap au-delà de la V1 — **ne pas confondre avec le périmètre V1 actuel** |
+| **[`V1_HANDOFF.md`](./V1_HANDOFF.md)** | Passation V1 : architecture, setup, API, tests | Reprise backend, Stripe, Anvil |
+| **[`FRONTEND_V1.md`](./FRONTEND_V1.md)** | Spec historique MVP frontend | Contexte uniquement |
+| **[`docs/POLISH.md`](./docs/POLISH.md)** | Checklist polish UX / parcours | Soutenance, polish |
+| **[`docs/AUTH.md`](./docs/AUTH.md)** | Google, MetaMask, reset asso/admin | Auth wallet + email |
+| **[`docs/V2_STRIPE_USDC.md`](./docs/V2_STRIPE_USDC.md)** | USDC Stripe (compte FR) | Paiements crypto Stripe |
+| **[`docker-compose.dev.yml`](./docker-compose.dev.yml)** | Stack dev unifiée | Alternative au setup manuel |
+| **[`GlobalDoc.md`](./GlobalDoc.md)** | Vision produit long terme | Roadmap — hors périmètre V1 |
 
 ### Backend
 
-| Fichier | Contenu | Quand le lire |
-|---------|---------|---------------|
-| **[`backend/.env.example`](./backend/.env.example)** | Template des variables d’environnement (DB, JWT, Stripe, blockchain) | Configuration locale du API NestJS |
-| [`backend/README.md`](./backend/README.md) | README générique NestJS (install, scripts) | Commandes npm de base uniquement — le détail métier est dans `V1_HANDOFF.md` |
+| Fichier | Contenu |
+|---------|---------|
+| **[`backend/.env.example`](./backend/.env.example)** | JWT, wallet, Google, mail, Stripe, blockchain |
 
 ### Smart contracts
 
-| Fichier | Contenu | Quand le lire |
-|---------|---------|---------------|
-| [`smart-contracts/README.md`](./smart-contracts/README.md) | README générique Foundry (`forge build`, `forge test`) | Commandes Foundry de base |
-| — | Déploiement Anvil, adresses, clés test | Voir **`V1_HANDOFF.md`** § blockchain |
-
-### À ignorer pour le produit DonNation
-
-Les fichiers `.md` sous `smart-contracts/lib/` (OpenZeppelin, forge-std) sont de la **documentation des dépendances**, pas du projet. Ne pas les utiliser comme référence produit.
+| Fichier | Contenu |
+|---------|---------|
+| [`smart-contracts/README.md`](./smart-contracts/README.md) | Foundry (`forge build`, `forge test`) |
+| Déploiement Anvil | **`V1_HANDOFF.md`** § blockchain |
 
 ---
 
-## Ordre de lecture recommandé (onboarding complet)
+## Périmètre actuel vs vision
 
-1. **`DOCUMENTATION.md`** — orientation
-2. **`V1_HANDOFF.md`** — état réel du V1 et comment tout faire tourner
-3. **`FRONTEND_V1.md`** — si tu codes le front
-4. **`GlobalDoc.md`** — si tu veux le contexte vision / phases futures
-
----
-
-## Périmètre V1 vs vision
-
-| | V1 (docs opérationnelles) | Vision long terme |
-|---|---------------------------|-------------------|
-| Docs | `V1_HANDOFF.md`, `FRONTEND_V1.md` | `GlobalDoc.md` |
-| Paiement | Stripe EUR + Connect | Crypto direct |
-| Blockchain | Mint reçu NFT après paiement fiat | Billetterie, marketplace, QR |
-| Auth | Email / mot de passe + JWT | Wallet (Privy, etc.) |
-
-En cas de doute sur ce qui est **à faire maintenant**, se fier à `V1_HANDOFF.md` et `FRONTEND_V1.md`.
+| | Actuel (polish V2) | Vision long terme |
+|---|-------------------|-------------------|
+| Auth donateur | Email, Google custodial, MetaMask | — |
+| Reset MDP | Asso + Admin uniquement | — |
+| Fidélité | Masquée frontend | Visible + gamification |
+| Paiement | Stripe EUR (+ crypto si compte US) | USDC natif |
+| Docs opérationnelles | `README`, `V1_HANDOFF`, `POLISH`, `AUTH` | `GlobalDoc.md` |
 
 ---
 
 ## Branche et état actuel
 
-- Branche de travail : **`feature/backend`**
-- Backend NestJS, contrats Foundry, flux don → Stripe → mint NFT validé en local (Anvil)
-- API front-ready : `GET /associations`, `GET /admin/associations`, CORS configuré
-- Frontend : à développer (spec dans `FRONTEND_V1.md`)
+- Branche de travail : **`feature/connect-front-with-back`**
+- Backend NestJS port **3001**, frontend Next.js port **3000**
+- Flux don → Stripe → mint NFT validé en local (Anvil)
+- CI : GitHub Actions + OpenSSF Scorecard

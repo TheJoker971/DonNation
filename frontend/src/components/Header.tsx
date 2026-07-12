@@ -67,17 +67,9 @@ export function Header() {
               </button>
             </>
           ) : (
-            <>
-              <Link href="/login" className="btn-secondary">
-                Connexion
-              </Link>
-              <Link href="/register" className="btn-secondary">
-                Inscription
-              </Link>
-              <Link href="/register/association" className="btn-primary">
-                Espace association
-              </Link>
-            </>
+            <Link href="/login" className="btn-primary">
+              Connexion
+            </Link>
           )}
         </div>
       </div>

@@ -50,9 +50,16 @@ export interface AssociationSupporter {
   createdAt: string;
 }
 
+export interface AssociationPhoto {
+  id: string;
+  url: string;
+  caption?: string | null;
+}
+
 export interface AssociationProfile extends Association {
   onChainRegistered?: boolean;
   stats: AssociationStats;
+  photos?: AssociationPhoto[];
   recentSupporters?: AssociationSupporter[];
 }
 
@@ -80,6 +87,7 @@ export interface Association {
   updatedAt?: string;
   owner?: User;
   stats?: AssociationStats;
+  publicProfileUrl?: string;
 }
 
 export interface Donation {

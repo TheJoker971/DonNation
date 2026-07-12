@@ -39,11 +39,16 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         <div className="space-y-3">
-          <label className="block text-sm font-semibold text-slate-700">Nom affiché (optionnel)</label>
+          <label className="block text-sm font-semibold text-slate-700">
+            Prénom ou pseudo
+            <span className="ml-1 text-xs font-normal text-slate-400">(affiché sur vos reçus)</span>
+          </label>
           <input
             type="text"
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
+            required
+            placeholder="Ex : Marie"
             className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
         </div>

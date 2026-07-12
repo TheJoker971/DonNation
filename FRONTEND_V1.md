@@ -1,5 +1,7 @@
 # DonNation — Spec frontend V1
 
+> **Historique** — Cette spec décrivait le MVP initial. Le frontend est implémenté ; voir [`docs/POLISH.md`](./docs/POLISH.md), [`docs/AUTH.md`](./docs/AUTH.md) et [`V1_HANDOFF.md`](./V1_HANDOFF.md) pour l’état actuel.
+
 Guide pour développer le frontend MVP. Le backend est prêt sur la branche `feature/backend`.
 
 **Lire aussi :** [`V1_HANDOFF.md`](./V1_HANDOFF.md) (setup backend, Stripe, Anvil, tests curl, pièges).

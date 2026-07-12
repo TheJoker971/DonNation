@@ -112,8 +112,8 @@ export default function RegisterAssociationPage() {
           Inscription donateur
         </Link>
         {' · '}
-        <Link href="/login" className="font-semibold text-brand-600 hover:text-brand-700">
-          Connexion
+        <Link href="/login?role=association" className="font-semibold text-brand-600 hover:text-brand-700">
+          Connexion association
         </Link>
       </p>
     </div>

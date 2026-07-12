@@ -7,6 +7,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { extname, join } from 'path';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterAssociationDto } from './dto/register-association.dto';
+import { UpdateAssociationDto } from './dto/update-association.dto';
 import { JwtPayload } from '../auth/types/jwt-payload.type';
 import { StripeService } from '../payments/stripe.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
@@ -115,6 +116,7 @@ export class AssociationsService {
   async findPublicBySlug(slug: string) {
     const association = await this.prisma.association.findFirst({
       where: { slug, status: AssociationStatus.APPROVED },
+      include: { photos: { orderBy: { order: 'asc' } } },
     });
 
     if (!association) {
@@ -135,7 +137,7 @@ export class AssociationsService {
         amountEur: true,
         createdAt: true,
         isAnonymous: true,
-        donor: { select: { displayName: true } },
+        donor: { select: { displayName: true, email: true } },
       },
     });
 
@@ -143,10 +145,11 @@ export class AssociationsService {
       ...this.toCatalogAssociation(association),
       onChainRegistered: association.onChainRegistered,
       stats,
+      photos: association.photos.map((p) => ({ id: p.id, url: p.url, caption: p.caption })),
       recentSupporters: recentDonations.map((donation) => ({
         displayName: donation.isAnonymous
           ? 'Donateur anonyme'
-          : donation.donor.displayName || 'Donateur',
+          : (donation.donor.displayName || donation.donor.email?.split('@')[0] || 'Donateur'),
         amountEur: donation.amountEur,
         createdAt: donation.createdAt,
       })),
@@ -241,7 +244,35 @@ export class AssociationsService {
     return {
       ...this.toPublicAssociation(association),
       owner: this.toPublicUser(association.owner),
+      publicProfileUrl: this.buildPublicProfileUrl(association.slug),
     };
+  }
+
+  async updateMine(ownerId: string, dto: UpdateAssociationDto) {
+    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    if (!association) {
+      throw new NotFoundException('Association not found for this account');
+    }
+
+    const updated = await this.prisma.association.update({
+      where: { id: association.id },
+      data: {
+        name: dto.name ?? undefined,
+        description: dto.description ?? undefined,
+      },
+      include: { owner: true },
+    });
+
+    return {
+      ...this.toPublicAssociation(updated),
+      owner: this.toPublicUser(updated.owner),
+      publicProfileUrl: this.buildPublicProfileUrl(updated.slug),
+    };
+  }
+
+  private buildPublicProfileUrl(slug: string): string {
+    const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
+    return `${appUrl.replace(/\/$/, '')}/associations/${slug}`;
   }
 
   async approve(associationId: string, adminId: string) {
@@ -327,6 +358,53 @@ export class AssociationsService {
           }
         : null,
     }));
+  }
+
+  async addPhotos(ownerId: string, files: Express.Multer.File[], captions: string[]) {
+    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    if (!association) throw new NotFoundException('Association not found');
+
+    const photosDir = join(process.cwd(), 'uploads', 'photos');
+    mkdirSync(photosDir, { recursive: true });
+
+    const currentCount = await this.prisma.associationPhoto.count({
+      where: { associationId: association.id },
+    });
+    if (currentCount + files.length > 10) {
+      throw new BadRequestException('Maximum 10 photos per association');
+    }
+
+    const created = await Promise.all(
+      files.map(async (file, i) => {
+        const ext = extname(file.originalname).toLowerCase() || '.jpg';
+        const filename = `${association.id}-${Date.now()}-${i}${ext}`;
+        writeFileSync(join(photosDir, filename), file.buffer);
+        const url = `${this.getPublicBaseUrl()}/uploads/photos/${filename}`;
+        return this.prisma.associationPhoto.create({
+          data: {
+            associationId: association.id,
+            url,
+            caption: captions[i] ?? null,
+            order: currentCount + i,
+          },
+        });
+      }),
+    );
+
+    return created;
+  }
+
+  async deletePhoto(ownerId: string, photoId: string) {
+    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    if (!association) throw new NotFoundException('Association not found');
+
+    const photo = await this.prisma.associationPhoto.findFirst({
+      where: { id: photoId, associationId: association.id },
+    });
+    if (!photo) throw new NotFoundException('Photo not found');
+
+    await this.prisma.associationPhoto.delete({ where: { id: photoId } });
+    return { deleted: true };
   }
 
   async updateLogo(ownerId: string, file: Express.Multer.File) {

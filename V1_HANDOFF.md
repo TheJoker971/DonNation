@@ -188,7 +188,7 @@ Copier depuis `backend/.env.example`. Ne jamais committer `.env`.
 
 ```env
 # App
-PORT=3000
+PORT=3001
 API_PREFIX=api/v1
 
 # Database (Docker port 5433)
@@ -252,9 +252,15 @@ Préfixe : `/api/v1`
 | POST | `/auth/register` | Non | Crée DONOR |
 | POST | `/auth/register/association` | Non | Crée ASSOCIATION (PENDING) |
 | POST | `/auth/login` | Non | JWT |
+| POST | `/auth/google` | Non | Donateur (Google + wallet custodial) |
+| POST | `/auth/wallet/nonce` | Non | Nonce MetaMask |
+| POST | `/auth/wallet/verify` | Non | JWT MetaMask |
+| POST | `/auth/forgot-password` | Non | Asso / Admin |
+| POST | `/auth/reset-password` | Non | Asso / Admin |
 | GET | `/auth/me` | Bearer | Profil |
 | GET | `/associations` | Non | Catalogue public (APPROVED uniquement) |
 | GET | `/associations/me` | Bearer | ASSOCIATION |
+| PATCH | `/associations/me` | Bearer | ASSOCIATION (description) |
 | POST | `/associations/me/stripe/onboard` | Bearer | ASSOCIATION |
 | GET | `/admin/associations` | Bearer | ADMIN (filtre `?status=PENDING`) |
 | PATCH | `/admin/associations/:id/approve` | Bearer | ADMIN |

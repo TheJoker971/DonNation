@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  WALLET
+}
+
 enum Role {
   ADMIN
   ASSOCIATION
@@ -35,14 +41,21 @@ enum InvoiceStatus {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  passwordHash  String?
-  role          Role     @default(DONOR)
-  walletAddress String?  @unique @map("wallet_address")
-  displayName   String?  @map("display_name")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id                         String       @id @default(uuid())
+  email                      String       @unique
+  passwordHash               String?
+  role                       Role         @default(DONOR)
+  authProvider               AuthProvider @default(EMAIL) @map("auth_provider")
+  googleId                   String?      @unique @map("google_id")
+  walletAddress              String?      @unique @map("wallet_address")
+  walletPrivateKeyEncrypted  String?      @map("wallet_private_key_encrypted")
+  walletAuthNonce            String?      @map("wallet_auth_nonce")
+  walletAuthNonceExpiresAt   DateTime?    @map("wallet_auth_nonce_expires_at")
+  passwordResetTokenHash     String?      @map("password_reset_token_hash")
+  passwordResetExpiresAt     DateTime?    @map("password_reset_expires_at")
+  displayName                String?      @map("display_name")
+  createdAt                  DateTime     @default(now()) @map("created_at")
+  updatedAt                  DateTime     @updatedAt @map("updated_at")
 
   association          Association?
   approvedAssociations Association[] @relation("ApprovedBy")
@@ -70,8 +83,21 @@ model Association {
   createdAt                DateTime          @default(now()) @map("created_at")
   updatedAt                DateTime          @updatedAt @map("updated_at")
   donations                Donation[]
+  photos                   AssociationPhoto[]
 
   @@map("associations")
+}
+
+model AssociationPhoto {
+  id            String      @id @default(uuid())
+  associationId String      @map("association_id")
+  association   Association @relation(fields: [associationId], references: [id], onDelete: Cascade)
+  url           String
+  caption       String?
+  order         Int         @default(0)
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@map("association_photos")
 }
 
 model Donation {
