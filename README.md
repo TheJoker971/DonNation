@@ -5,11 +5,20 @@ Plateforme de dons associatifs — NestJS, Next.js, Stripe Connect, reçus NFT o
 ## OpenSSF Scorecard
 
 [![Build](https://github.com/TheJoker971/DonNation/actions/workflows/main.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/main.yml)
+
 [![CodeQL](https://github.com/TheJoker971/DonNation/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/codeql-analysis.yml)
+
 [![License](https://img.shields.io/github/license/TheJoker971/DonNation)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/TheJoker971/DonNation)](https://github.com/TheJoker971/DonNation/releases)
-[![GitHub issues](https://img.shields.io/github/issues/TheJoker971/DonNation)](https://github.com/TheJoker971/DonNation/issues)
+
 [![GitHub stars](https://img.shields.io/github/stars/TheJoker971/DonNation?style=social)](https://github.com/TheJoker971/DonNation/stargazers)
+
+[![GitHub forks](https://img.shields.io/github/forks/TheJoker971/DonNation?style=social)](https://github.com/TheJoker971/DonNation/network/members)
+
+[![GitHub issues](https://img.shields.io/github/issues/TheJoker971/DonNation)](https://github.com/TheJoker971/DonNation/issues)
+
+[![Last Commit](https://img.shields.io/github/last-commit/TheJoker971/DonNation)](https://github.com/TheJoker971/DonNation/commits/main)
+
+[![Release](https://img.shields.io/github/v/release/TheJoker971/DonNation)](https://github.com/TheJoker971/DonNation/releases)
 
 
 ## Démarrage rapide (manuel — recommandé)
