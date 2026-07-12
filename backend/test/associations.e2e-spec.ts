@@ -79,15 +79,23 @@ describe('Associations (e2e)', () => {
       .expect(200);
 
     expect(Array.isArray(pending.body)).toBe(true);
-    expect(pending.body.some((a: { id: string }) => a.id === associationId)).toBe(true);
-    expect(pending.body.every((a: { status: string }) => a.status === 'PENDING')).toBe(true);
+    expect(
+      pending.body.some((a: { id: string }) => a.id === associationId),
+    ).toBe(true);
+    expect(
+      pending.body.every((a: { status: string }) => a.status === 'PENDING'),
+    ).toBe(true);
   });
 
   it('does not expose public catalog before approval', async () => {
-    const response = await request(app.getHttpServer()).get('/api/v1/associations').expect(200);
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/associations')
+      .expect(200);
 
     expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body.some((a: { id: string }) => a.id === associationId)).toBe(false);
+    expect(
+      response.body.some((a: { id: string }) => a.id === associationId),
+    ).toBe(false);
   });
 
   it('approves association as admin', async () => {
@@ -101,9 +109,13 @@ describe('Associations (e2e)', () => {
   });
 
   it('exposes approved association in public catalog', async () => {
-    const response = await request(app.getHttpServer()).get('/api/v1/associations').expect(200);
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/associations')
+      .expect(200);
 
-    const match = response.body.find((a: { id: string }) => a.id === associationId);
+    const match = response.body.find(
+      (a: { id: string }) => a.id === associationId,
+    );
     expect(match).toBeDefined();
     expect(match.stripeOnboardingComplete).toBeDefined();
     expect(match.stats).toBeDefined();
@@ -112,8 +124,12 @@ describe('Associations (e2e)', () => {
   });
 
   it('exposes public profile by slug', async () => {
-    const catalog = await request(app.getHttpServer()).get('/api/v1/associations').expect(200);
-    const match = catalog.body.find((a: { id: string }) => a.id === associationId);
+    const catalog = await request(app.getHttpServer())
+      .get('/api/v1/associations')
+      .expect(200);
+    const match = catalog.body.find(
+      (a: { id: string }) => a.id === associationId,
+    );
     expect(match?.slug).toBeDefined();
 
     const profile = await request(app.getHttpServer())

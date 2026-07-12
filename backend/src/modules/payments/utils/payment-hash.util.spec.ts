@@ -8,6 +8,8 @@ describe('hashStripePaymentIntent', () => {
   });
 
   it('differs for different payment intent ids', () => {
-    expect(hashStripePaymentIntent('pi_a')).not.toBe(hashStripePaymentIntent('pi_b'));
+    expect(hashStripePaymentIntent('pi_a')).not.toBe(
+      hashStripePaymentIntent('pi_b'),
+    );
   });
 });

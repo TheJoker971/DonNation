@@ -47,7 +47,10 @@ export class AssociationsController {
   @Patch('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ASSOCIATION)
-  updateMine(@CurrentUser() user: JwtPayload, @Body() dto: UpdateAssociationDto) {
+  updateMine(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateAssociationDto,
+  ) {
     return this.associationsService.updateMine(user.sub, dto);
   }
 
@@ -61,8 +64,14 @@ export class AssociationsController {
   @Get('me/donations/:id/receipt')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ASSOCIATION)
-  async donationReceipt(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
-    const pdfUrl = await this.receiptService.ensureReceiptForAssociation(user.sub, id);
+  async donationReceipt(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const pdfUrl = await this.receiptService.ensureReceiptForAssociation(
+      user.sub,
+      id,
+    );
     return { pdfUrl };
   }
 
@@ -74,7 +83,10 @@ export class AssociationsController {
       limits: { fileSize: 2 * 1024 * 1024 },
     }),
   )
-  uploadLogo(@CurrentUser() user: JwtPayload, @UploadedFile() file: Express.Multer.File) {
+  uploadLogo(
+    @CurrentUser() user: JwtPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     if (!file) {
       throw new BadRequestException('Logo file is required');
     }
@@ -101,7 +113,8 @@ export class AssociationsController {
     @Body('captions') captions?: string,
   ) {
     const photos = files?.photos;
-    if (!photos?.length) throw new BadRequestException('At least one photo is required');
+    if (!photos?.length)
+      throw new BadRequestException('At least one photo is required');
 
     const allowedMime = ['image/jpeg', 'image/png', 'image/webp'];
     for (const f of photos) {
@@ -117,7 +130,10 @@ export class AssociationsController {
   @Delete('me/photos/:photoId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ASSOCIATION)
-  deletePhoto(@CurrentUser() user: JwtPayload, @Param('photoId', ParseUUIDPipe) photoId: string) {
+  deletePhoto(
+    @CurrentUser() user: JwtPayload,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
+  ) {
     return this.associationsService.deletePhoto(user.sub, photoId);
   }
 

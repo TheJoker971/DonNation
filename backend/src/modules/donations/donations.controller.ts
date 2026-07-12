@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { DonationsService } from './donations.service';
 import { ReceiptService } from '../documents/receipt.service';
@@ -39,13 +47,22 @@ export class DonationsController {
   }
 
   @Get(':id/receipt')
-  async receipt(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
-    const pdfUrl = await this.receiptService.ensureReceiptForDonor(user.sub, id);
+  async receipt(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const pdfUrl = await this.receiptService.ensureReceiptForDonor(
+      user.sub,
+      id,
+    );
     return { pdfUrl };
   }
 
   @Get(':id')
-  findOne(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
+  findOne(
+    @CurrentUser() user: JwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.donationsService.findOneForDonor(user.sub, id);
   }
 }

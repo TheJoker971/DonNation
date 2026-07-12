@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AssociationStatus, DonationStatus, Role } from '@prisma/client';
@@ -27,7 +33,9 @@ export class AssociationsService {
   ) {}
 
   async register(dto: RegisterAssociationDto) {
-    const emailTaken = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const emailTaken = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (emailTaken) {
       throw new ConflictException('Email already in use');
     }
@@ -96,7 +104,10 @@ export class AssociationsService {
       });
     }
 
-    return this.stripeService.createAccountLink(stripeConnectAccountId, association.id);
+    return this.stripeService.createAccountLink(
+      stripeConnectAccountId,
+      association.id,
+    );
   }
 
   async findPublicCatalog() {
@@ -105,11 +116,14 @@ export class AssociationsService {
       orderBy: { name: 'asc' },
     });
 
-    const statsByAssociation = await this.loadAssociationStats(associations.map((a) => a.id));
+    const statsByAssociation = await this.loadAssociationStats(
+      associations.map((a) => a.id),
+    );
 
     return associations.map((association) => ({
       ...this.toCatalogAssociation(association),
-      stats: statsByAssociation.get(association.id) ?? this.emptyAssociationStats(),
+      stats:
+        statsByAssociation.get(association.id) ?? this.emptyAssociationStats(),
     }));
   }
 
@@ -145,11 +159,17 @@ export class AssociationsService {
       ...this.toCatalogAssociation(association),
       onChainRegistered: association.onChainRegistered,
       stats,
-      photos: association.photos.map((p) => ({ id: p.id, url: p.url, caption: p.caption })),
+      photos: association.photos.map((p) => ({
+        id: p.id,
+        url: p.url,
+        caption: p.caption,
+      })),
       recentSupporters: recentDonations.map((donation) => ({
         displayName: donation.isAnonymous
           ? 'Donateur anonyme'
-          : (donation.donor.displayName || donation.donor.email?.split('@')[0] || 'Donateur'),
+          : donation.donor.displayName ||
+            donation.donor.email?.split('@')[0] ||
+            'Donateur',
         amountEur: donation.amountEur,
         createdAt: donation.createdAt,
       })),
@@ -157,7 +177,11 @@ export class AssociationsService {
   }
 
   private getPaidDonationStatuses(): DonationStatus[] {
-    return [DonationStatus.PAID, DonationStatus.MINTING, DonationStatus.COMPLETED];
+    return [
+      DonationStatus.PAID,
+      DonationStatus.MINTING,
+      DonationStatus.COMPLETED,
+    ];
   }
 
   private emptyAssociationStats() {
@@ -202,7 +226,10 @@ export class AssociationsService {
       );
     }
 
-    const statsMap = new Map<string, ReturnType<typeof this.emptyAssociationStats>>();
+    const statsMap = new Map<
+      string,
+      ReturnType<typeof this.emptyAssociationStats>
+    >();
     for (const id of associationIds) {
       statsMap.set(id, this.emptyAssociationStats());
     }
@@ -249,7 +276,9 @@ export class AssociationsService {
   }
 
   async updateMine(ownerId: string, dto: UpdateAssociationDto) {
-    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    const association = await this.prisma.association.findUnique({
+      where: { ownerId },
+    });
     if (!association) {
       throw new NotFoundException('Association not found for this account');
     }
@@ -276,11 +305,19 @@ export class AssociationsService {
   }
 
   async approve(associationId: string, adminId: string) {
-    return this.updateStatus(associationId, adminId, AssociationStatus.APPROVED);
+    return this.updateStatus(
+      associationId,
+      adminId,
+      AssociationStatus.APPROVED,
+    );
   }
 
   async suspend(associationId: string, adminId: string) {
-    return this.updateStatus(associationId, adminId, AssociationStatus.SUSPENDED);
+    return this.updateStatus(
+      associationId,
+      adminId,
+      AssociationStatus.SUSPENDED,
+    );
   }
 
   private async updateStatus(
@@ -296,11 +333,17 @@ export class AssociationsService {
       throw new NotFoundException('Association not found');
     }
 
-    if (status === AssociationStatus.APPROVED && association.status === AssociationStatus.APPROVED) {
+    if (
+      status === AssociationStatus.APPROVED &&
+      association.status === AssociationStatus.APPROVED
+    ) {
       throw new ConflictException('Association is already approved');
     }
 
-    if (status === AssociationStatus.SUSPENDED && association.status === AssociationStatus.SUSPENDED) {
+    if (
+      status === AssociationStatus.SUSPENDED &&
+      association.status === AssociationStatus.SUSPENDED
+    ) {
       throw new ConflictException('Association is already suspended');
     }
 
@@ -308,8 +351,14 @@ export class AssociationsService {
       where: { id: associationId },
       data: {
         status,
-        approvedAt: status === AssociationStatus.APPROVED ? new Date() : association.approvedAt,
-        approvedById: status === AssociationStatus.APPROVED ? adminId : association.approvedById,
+        approvedAt:
+          status === AssociationStatus.APPROVED
+            ? new Date()
+            : association.approvedAt,
+        approvedById:
+          status === AssociationStatus.APPROVED
+            ? adminId
+            : association.approvedById,
       },
     });
 
@@ -319,7 +368,9 @@ export class AssociationsService {
   }
 
   async findReceivedDonations(ownerId: string) {
-    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    const association = await this.prisma.association.findUnique({
+      where: { ownerId },
+    });
     if (!association) {
       throw new NotFoundException('Association not found for this account');
     }
@@ -327,7 +378,13 @@ export class AssociationsService {
     const donations = await this.prisma.donation.findMany({
       where: {
         associationId: association.id,
-        status: { in: [DonationStatus.PAID, DonationStatus.MINTING, DonationStatus.COMPLETED] },
+        status: {
+          in: [
+            DonationStatus.PAID,
+            DonationStatus.MINTING,
+            DonationStatus.COMPLETED,
+          ],
+        },
       },
       include: {
         donor: { select: { email: true, displayName: true } },
@@ -360,8 +417,14 @@ export class AssociationsService {
     }));
   }
 
-  async addPhotos(ownerId: string, files: Express.Multer.File[], captions: string[]) {
-    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+  async addPhotos(
+    ownerId: string,
+    files: Express.Multer.File[],
+    captions: string[],
+  ) {
+    const association = await this.prisma.association.findUnique({
+      where: { ownerId },
+    });
     if (!association) throw new NotFoundException('Association not found');
 
     const photosDir = join(process.cwd(), 'uploads', 'photos');
@@ -395,7 +458,9 @@ export class AssociationsService {
   }
 
   async deletePhoto(ownerId: string, photoId: string) {
-    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    const association = await this.prisma.association.findUnique({
+      where: { ownerId },
+    });
     if (!association) throw new NotFoundException('Association not found');
 
     const photo = await this.prisma.associationPhoto.findFirst({
@@ -408,7 +473,9 @@ export class AssociationsService {
   }
 
   async updateLogo(ownerId: string, file: Express.Multer.File) {
-    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+    const association = await this.prisma.association.findUnique({
+      where: { ownerId },
+    });
     if (!association) {
       throw new NotFoundException('Association not found for this account');
     }
@@ -442,11 +509,15 @@ export class AssociationsService {
     );
   }
 
-  private async resolveRegistrationSlug(dto: RegisterAssociationDto): Promise<string> {
+  private async resolveRegistrationSlug(
+    dto: RegisterAssociationDto,
+  ): Promise<string> {
     const base = slugify(dto.name);
 
     if (base.length < 2) {
-      throw new BadRequestException('Association name must contain enough characters to generate a public URL');
+      throw new BadRequestException(
+        'Association name must contain enough characters to generate a public URL',
+      );
     }
 
     const existing = await this.prisma.association.findMany({
@@ -454,10 +525,16 @@ export class AssociationsService {
       select: { slug: true },
     });
 
-    return buildUniqueSlug(base, new Set(existing.map((association) => association.slug)));
+    return buildUniqueSlug(
+      base,
+      new Set(existing.map((association) => association.slug)),
+    );
   }
 
-  private async syncAssociationOnChain(associationId: string, status: AssociationStatus) {
+  private async syncAssociationOnChain(
+    associationId: string,
+    status: AssociationStatus,
+  ) {
     if (!this.blockchainService.isEnabled()) {
       return;
     }
@@ -475,7 +552,10 @@ export class AssociationsService {
         await this.blockchainService.deactivateAssociation(associationId);
       }
     } catch (error) {
-      this.logger.error(`On-chain sync failed for association ${associationId}`, error);
+      this.logger.error(
+        `On-chain sync failed for association ${associationId}`,
+        error,
+      );
     }
   }
 

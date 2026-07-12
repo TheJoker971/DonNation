@@ -79,9 +79,13 @@ describe('StripeService', () => {
       const service = createService();
       const result = await service.createDonationPaymentIntent(donationFixture);
 
-      expect(mockAccountsUpdateCapability).toHaveBeenCalledWith('acct_test', 'crypto_payments', {
-        requested: true,
-      });
+      expect(mockAccountsUpdateCapability).toHaveBeenCalledWith(
+        'acct_test',
+        'crypto_payments',
+        {
+          requested: true,
+        },
+      );
       expect(mockPaymentIntentsCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           payment_method_types: ['card', 'crypto'],
@@ -101,7 +105,9 @@ describe('StripeService', () => {
       const result = await service.createDonationPaymentIntent(donationFixture);
 
       expect(mockPaymentIntentsCreate).toHaveBeenCalledTimes(2);
-      expect(mockPaymentIntentsCreate.mock.calls[1][0].payment_method_types).toEqual(['card']);
+      expect(
+        mockPaymentIntentsCreate.mock.calls[1][0].payment_method_types,
+      ).toEqual(['card']);
       expect(result.paymentMethods).toEqual(['card']);
     });
 

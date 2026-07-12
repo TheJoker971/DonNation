@@ -12,7 +12,10 @@ export class MailService {
   constructor(private readonly config: ConfigService) {
     const apiKey = this.config.get<string>('RESEND_API_KEY');
     this.resend = apiKey ? new Resend(apiKey) : null;
-    this.from = this.config.get<string>('MAIL_FROM', 'DonNation <noreply@donnation.local>');
+    this.from = this.config.get<string>(
+      'MAIL_FROM',
+      'DonNation <noreply@donnation.local>',
+    );
   }
 
   async sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
@@ -27,18 +30,28 @@ export class MailService {
     const text = `Réinitialisez votre mot de passe : ${resetUrl}`;
 
     if (this.resend) {
-      await this.resend.emails.send({ from: this.from, to, subject, html, text });
+      await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        html,
+        text,
+      });
       return;
     }
 
     const smtpHost = this.config.get<string>('SMTP_HOST');
     if (!smtpHost) {
-      this.logger.warn('═══════════════════════════════════════════════════════');
+      this.logger.warn(
+        '═══════════════════════════════════════════════════════',
+      );
       this.logger.warn('  MAIL NON CONFIGURÉ — lien de reset (dev uniquement)');
       this.logger.warn(`  Destinataire : ${to}`);
       this.logger.warn(`  Lien         : ${resetUrl}`);
       this.logger.warn('  → Ajouter RESEND_API_KEY ou SMTP_HOST dans .env');
-      this.logger.warn('═══════════════════════════════════════════════════════');
+      this.logger.warn(
+        '═══════════════════════════════════════════════════════',
+      );
       return;
     }
 

@@ -17,7 +17,9 @@ export class DonationMintService {
 
   async mintPaidDonation(donationId: string): Promise<void> {
     if (!this.blockchain.isEnabled()) {
-      this.logger.debug(`Skipping mint for ${donationId}: blockchain not configured`);
+      this.logger.debug(
+        `Skipping mint for ${donationId}: blockchain not configured`,
+      );
       return;
     }
 
@@ -31,7 +33,9 @@ export class DonationMintService {
     });
 
     if (!donation || !donation.invoice) {
-      this.logger.warn(`Cannot mint ${donationId}: donation or invoice missing`);
+      this.logger.warn(
+        `Cannot mint ${donationId}: donation or invoice missing`,
+      );
       return;
     }
 
@@ -39,24 +43,35 @@ export class DonationMintService {
       return;
     }
 
-    if (donation.status !== DonationStatus.PAID && donation.status !== DonationStatus.MINTING) {
-      this.logger.warn(`Cannot mint ${donationId}: status is ${donation.status}`);
+    if (
+      donation.status !== DonationStatus.PAID &&
+      donation.status !== DonationStatus.MINTING
+    ) {
+      this.logger.warn(
+        `Cannot mint ${donationId}: status is ${donation.status}`,
+      );
       return;
     }
 
     if (!donation.invoice.externalPaymentIdHash) {
-      this.logger.warn(`Cannot mint ${donationId}: externalPaymentIdHash missing`);
+      this.logger.warn(
+        `Cannot mint ${donationId}: externalPaymentIdHash missing`,
+      );
       return;
     }
 
     if (!donation.stripePaymentIntentId) {
-      this.logger.warn(`Cannot mint ${donationId}: stripePaymentIntentId missing`);
+      this.logger.warn(
+        `Cannot mint ${donationId}: stripePaymentIntentId missing`,
+      );
       return;
     }
 
     const mintTo = this.resolveMintRecipient(donation.donor.walletAddress);
     if (!mintTo) {
-      this.logger.warn(`Cannot mint ${donationId}: no donor wallet and BLOCKCHAIN_CUSTODIAL_WALLET unset`);
+      this.logger.warn(
+        `Cannot mint ${donationId}: no donor wallet and BLOCKCHAIN_CUSTODIAL_WALLET unset`,
+      );
       return;
     }
 
@@ -111,7 +126,9 @@ export class DonationMintService {
         });
       });
 
-      this.logger.log(`Donation ${donationId} minted as token #${tokenId} (${txHash})`);
+      this.logger.log(
+        `Donation ${donationId} minted as token #${tokenId} (${txHash})`,
+      );
     } catch (error) {
       this.logger.error(`Mint failed for donation ${donationId}`, error);
 

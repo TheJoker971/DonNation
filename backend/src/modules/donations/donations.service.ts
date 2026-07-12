@@ -1,5 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AssociationStatus, DonationStatus, InvoiceStatus } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  AssociationStatus,
+  DonationStatus,
+  InvoiceStatus,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
 import { StripeService } from '../payments/stripe.service';
@@ -22,7 +30,9 @@ export class DonationsService {
     }
 
     if (association.status !== AssociationStatus.APPROVED) {
-      throw new BadRequestException('Association is not approved for donations');
+      throw new BadRequestException(
+        'Association is not approved for donations',
+      );
     }
 
     const donor = await this.prisma.user.findUnique({ where: { id: donorId } });
@@ -95,7 +105,8 @@ export class DonationsService {
 
     const totalDonatedEur = donations.reduce((sum, d) => sum + d.amountEur, 0);
     const totalPoints = donations.reduce((sum, d) => sum + d.pointsEarned, 0);
-    const associationsSupported = new Set(donations.map((d) => d.associationId)).size;
+    const associationsSupported = new Set(donations.map((d) => d.associationId))
+      .size;
 
     return {
       totalDonatedEur,

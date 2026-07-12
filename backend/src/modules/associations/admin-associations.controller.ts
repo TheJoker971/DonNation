@@ -1,4 +1,12 @@
-import { Controller, Get, Param, ParseUUIDPipe, Patch, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { AssociationsService } from './associations.service';
 import { ListAssociationsQueryDto } from './dto/list-associations-query.dto';
@@ -20,12 +28,18 @@ export class AdminAssociationsController {
   }
 
   @Patch(':id/approve')
-  approve(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() admin: JwtPayload) {
+  approve(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() admin: JwtPayload,
+  ) {
     return this.associationsService.approve(id, admin.sub);
   }
 
   @Patch(':id/suspend')
-  suspend(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() admin: JwtPayload) {
+  suspend(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() admin: JwtPayload,
+  ) {
     return this.associationsService.suspend(id, admin.sub);
   }
 }

@@ -85,7 +85,10 @@ export class ReceiptService {
     return pdfUrl;
   }
 
-  async ensureReceiptForDonor(donorId: string, donationId: string): Promise<string> {
+  async ensureReceiptForDonor(
+    donorId: string,
+    donationId: string,
+  ): Promise<string> {
     const donation = await this.prisma.donation.findFirst({
       where: { id: donationId, donorId },
     });
@@ -102,8 +105,13 @@ export class ReceiptService {
     return pdfUrl;
   }
 
-  async ensureReceiptForAssociation(ownerId: string, donationId: string): Promise<string> {
-    const association = await this.prisma.association.findUnique({ where: { ownerId } });
+  async ensureReceiptForAssociation(
+    ownerId: string,
+    donationId: string,
+  ): Promise<string> {
+    const association = await this.prisma.association.findUnique({
+      where: { ownerId },
+    });
     if (!association) {
       throw new NotFoundException('Association not found');
     }
@@ -156,48 +164,103 @@ export class ReceiptService {
 
   // ─── Header band ─────────────────────────────────────────────────────────────
 
-  private drawHeader(doc: InstanceType<typeof PDFDocument>, W: number, donation: ReceiptDonation): void {
+  private drawHeader(
+    doc: InstanceType<typeof PDFDocument>,
+    W: number,
+    donation: ReceiptDonation,
+  ): void {
     // Dark band
     doc.rect(0, 0, W, 108).fill(this.navy);
 
     // Brand name
-    doc.fillColor('#ffffff').fontSize(28).font('Helvetica-Bold').text('DonNation', 40, 30, { lineBreak: false });
+    doc
+      .fillColor('#ffffff')
+      .fontSize(28)
+      .font('Helvetica-Bold')
+      .text('DonNation', 40, 30, { lineBreak: false });
 
     // Tagline
-    doc.fillColor('#94a3b8').fontSize(10).font('Helvetica').text('Reçu officiel de donation', 40, 68, { lineBreak: false });
+    doc
+      .fillColor('#94a3b8')
+      .fontSize(10)
+      .font('Helvetica')
+      .text('Reçu officiel de donation', 40, 68, { lineBreak: false });
 
     // Green accent bar left
     doc.rect(0, 0, 5, 108).fill(this.green);
 
     // Date top-right
     const dateStr = donation.createdAt.toLocaleDateString('fr-FR', {
-      day: '2-digit', month: 'long', year: 'numeric',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
     });
-    doc.fillColor('#94a3b8').fontSize(9).font('Helvetica').text(dateStr, W - 200, 44, { width: 160, align: 'right', lineBreak: false });
+    doc
+      .fillColor('#94a3b8')
+      .fontSize(9)
+      .font('Helvetica')
+      .text(dateStr, W - 200, 44, {
+        width: 160,
+        align: 'right',
+        lineBreak: false,
+      });
 
     // Blockchain badge top-right
     doc.rect(W - 138, 22, 98, 16).fill(this.green);
-    doc.fillColor('#ffffff').fontSize(7.5).font('Helvetica-Bold').text('CERTIFIÉ BLOCKCHAIN', W - 136, 26, { width: 94, align: 'center', lineBreak: false });
+    doc
+      .fillColor('#ffffff')
+      .fontSize(7.5)
+      .font('Helvetica-Bold')
+      .text('CERTIFIÉ BLOCKCHAIN', W - 136, 26, {
+        width: 94,
+        align: 'center',
+        lineBreak: false,
+      });
   }
 
   // ─── Amount hero ──────────────────────────────────────────────────────────────
 
-  private drawAmountHero(doc: InstanceType<typeof PDFDocument>, W: number, donation: ReceiptDonation): void {
+  private drawAmountHero(
+    doc: InstanceType<typeof PDFDocument>,
+    W: number,
+    donation: ReceiptDonation,
+  ): void {
     const y = 108;
     doc.rect(0, y, W, 88).fill(this.greenLight);
 
     const amount = `${(donation.amountEur / 100).toFixed(2)} €`;
 
-    doc.fillColor(this.greenDark).fontSize(10).font('Helvetica').text('MONTANT DU DON', 0, y + 18, { align: 'center', width: W, lineBreak: false });
-    doc.fillColor(this.greenDark).fontSize(36).font('Helvetica-Bold').text(amount, 0, y + 34, { align: 'center', width: W, lineBreak: false });
+    doc
+      .fillColor(this.greenDark)
+      .fontSize(10)
+      .font('Helvetica')
+      .text('MONTANT DU DON', 0, y + 18, {
+        align: 'center',
+        width: W,
+        lineBreak: false,
+      });
+    doc
+      .fillColor(this.greenDark)
+      .fontSize(36)
+      .font('Helvetica-Bold')
+      .text(amount, 0, y + 34, { align: 'center', width: W, lineBreak: false });
 
     // Separator line
-    doc.moveTo(0, y + 88).lineTo(W, y + 88).strokeColor(this.slateBorder).lineWidth(1).stroke();
+    doc
+      .moveTo(0, y + 88)
+      .lineTo(W, y + 88)
+      .strokeColor(this.slateBorder)
+      .lineWidth(1)
+      .stroke();
   }
 
   // ─── Info section ─────────────────────────────────────────────────────────────
 
-  private drawInfoSection(doc: InstanceType<typeof PDFDocument>, W: number, donation: ReceiptDonation): void {
+  private drawInfoSection(
+    doc: InstanceType<typeof PDFDocument>,
+    W: number,
+    donation: ReceiptDonation,
+  ): void {
     const top = 196;
     const pad = 40;
     const colW = (W - pad * 2) / 2 - 16;
@@ -205,13 +268,29 @@ export class ReceiptService {
     doc.rect(0, top, W, 172).fill(this.slateLight);
 
     // Section title
-    doc.fillColor(this.textDark).fontSize(11).font('Helvetica-Bold').text('DÉTAILS DU DON', pad, top + 22, { lineBreak: false });
-    doc.moveTo(pad, top + 36).lineTo(W - pad, top + 36).strokeColor(this.slateBorder).lineWidth(0.5).stroke();
+    doc
+      .fillColor(this.textDark)
+      .fontSize(11)
+      .font('Helvetica-Bold')
+      .text('DÉTAILS DU DON', pad, top + 22, { lineBreak: false });
+    doc
+      .moveTo(pad, top + 36)
+      .lineTo(W - pad, top + 36)
+      .strokeColor(this.slateBorder)
+      .lineWidth(0.5)
+      .stroke();
 
     // Left column
     const leftRows: [string, string][] = [
       ['Association', donation.association.name],
-      ['Date', donation.createdAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })],
+      [
+        'Date',
+        donation.createdAt.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+        }),
+      ],
       ['Référence', donation.id.substring(0, 18) + '…'],
     ];
 
@@ -226,7 +305,10 @@ export class ReceiptService {
     ];
 
     if (donation.stripePaymentIntentId) {
-      rightRows.push(['Réf. paiement', donation.stripePaymentIntentId.substring(0, 22) + '…']);
+      rightRows.push([
+        'Réf. paiement',
+        donation.stripePaymentIntentId.substring(0, 22) + '…',
+      ]);
     }
 
     const rowH = 26;
@@ -234,24 +316,49 @@ export class ReceiptService {
 
     leftRows.forEach(([label, value], i) => {
       const y = rowTop + i * rowH;
-      doc.fillColor(this.textMuted).fontSize(8).font('Helvetica').text(label.toUpperCase(), pad, y, { lineBreak: false });
-      doc.fillColor(this.textDark).fontSize(10).font('Helvetica-Bold').text(value, pad, y + 10, { width: colW, lineBreak: false });
+      doc
+        .fillColor(this.textMuted)
+        .fontSize(8)
+        .font('Helvetica')
+        .text(label.toUpperCase(), pad, y, { lineBreak: false });
+      doc
+        .fillColor(this.textDark)
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .text(value, pad, y + 10, { width: colW, lineBreak: false });
     });
 
     const rightX = pad + colW + 32;
     rightRows.forEach(([label, value], i) => {
       const y = rowTop + i * rowH;
-      doc.fillColor(this.textMuted).fontSize(8).font('Helvetica').text(label.toUpperCase(), rightX, y, { lineBreak: false });
-      doc.fillColor(this.textDark).fontSize(10).font('Helvetica-Bold').text(value, rightX, y + 10, { width: colW, lineBreak: false });
+      doc
+        .fillColor(this.textMuted)
+        .fontSize(8)
+        .font('Helvetica')
+        .text(label.toUpperCase(), rightX, y, { lineBreak: false });
+      doc
+        .fillColor(this.textDark)
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .text(value, rightX, y + 10, { width: colW, lineBreak: false });
     });
 
     // Divider between sections
-    doc.moveTo(0, top + 172).lineTo(W, top + 172).strokeColor(this.slateBorder).lineWidth(1).stroke();
+    doc
+      .moveTo(0, top + 172)
+      .lineTo(W, top + 172)
+      .strokeColor(this.slateBorder)
+      .lineWidth(1)
+      .stroke();
   }
 
   // ─── Blockchain section ───────────────────────────────────────────────────────
 
-  private drawBlockchainSection(doc: InstanceType<typeof PDFDocument>, W: number, donation: ReceiptDonation): void {
+  private drawBlockchainSection(
+    doc: InstanceType<typeof PDFDocument>,
+    W: number,
+    donation: ReceiptDonation,
+  ): void {
     const top = 368;
     const pad = 40;
 
@@ -259,14 +366,31 @@ export class ReceiptService {
 
     // Title row
     doc.rect(pad, top + 22, 3, 16).fill(this.green);
-    doc.fillColor(this.textDark).fontSize(11).font('Helvetica-Bold').text('CERTIFICATION BLOCKCHAIN', pad + 10, top + 22, { lineBreak: false });
+    doc
+      .fillColor(this.textDark)
+      .fontSize(11)
+      .font('Helvetica-Bold')
+      .text('CERTIFICATION BLOCKCHAIN', pad + 10, top + 22, {
+        lineBreak: false,
+      });
 
-    doc.fillColor(this.textMuted).fontSize(9).font('Helvetica').text(
-      'Ces données sont enregistrées de façon permanente et infalsifiable sur la blockchain.',
-      pad, top + 44, { width: W - pad * 2, lineBreak: false },
-    );
+    doc
+      .fillColor(this.textMuted)
+      .fontSize(9)
+      .font('Helvetica')
+      .text(
+        'Ces données sont enregistrées de façon permanente et infalsifiable sur la blockchain.',
+        pad,
+        top + 44,
+        { width: W - pad * 2, lineBreak: false },
+      );
 
-    doc.moveTo(pad, top + 58).lineTo(W - pad, top + 58).strokeColor(this.slateBorder).lineWidth(0.5).stroke();
+    doc
+      .moveTo(pad, top + 58)
+      .lineTo(W - pad, top + 58)
+      .strokeColor(this.slateBorder)
+      .lineWidth(0.5)
+      .stroke();
 
     const rows: [string, string][] = [
       ['Statut NFT', this.translateInvoiceStatus(donation.invoice.status)],
@@ -289,13 +413,21 @@ export class ReceiptService {
     const colLabelW = 120;
 
     for (const [label, value] of rows) {
-      doc.fillColor(this.textMuted).fontSize(8.5).font('Helvetica').text(label, pad, curY, { width: colLabelW, lineBreak: false });
+      doc
+        .fillColor(this.textMuted)
+        .fontSize(8.5)
+        .font('Helvetica')
+        .text(label, pad, curY, { width: colLabelW, lineBreak: false });
 
       const isHash = value.startsWith('0x');
-      doc.fillColor(isHash ? this.slate : this.textDark)
+      doc
+        .fillColor(isHash ? this.slate : this.textDark)
         .fontSize(isHash ? 7.5 : 9)
         .font(isHash ? 'Helvetica' : 'Helvetica-Bold')
-        .text(value, pad + colLabelW + 8, curY, { width: W - pad * 2 - colLabelW - 8, lineBreak: false });
+        .text(value, pad + colLabelW + 8, curY, {
+          width: W - pad * 2 - colLabelW - 8,
+          lineBreak: false,
+        });
 
       curY += 20;
     }
@@ -303,23 +435,44 @@ export class ReceiptService {
 
   // ─── Page footer ─────────────────────────────────────────────────────────────
 
-  private drawPageFooter(doc: InstanceType<typeof PDFDocument>, W: number): void {
+  private drawPageFooter(
+    doc: InstanceType<typeof PDFDocument>,
+    W: number,
+  ): void {
     const footerY = 792;
     doc.rect(0, footerY, W, 50).fill(this.navyLight);
 
-    doc.fillColor('#94a3b8').fontSize(7.5).font('Helvetica').text(
-      'Ce document atteste du paiement enregistré sur DonNation. Conservez-le pour vos archives.',
-      40, footerY + 10, { width: W - 200, lineBreak: false },
-    );
+    doc
+      .fillColor('#94a3b8')
+      .fontSize(7.5)
+      .font('Helvetica')
+      .text(
+        'Ce document atteste du paiement enregistré sur DonNation. Conservez-le pour vos archives.',
+        40,
+        footerY + 10,
+        { width: W - 200, lineBreak: false },
+      );
 
     const genDate = new Date().toLocaleDateString('fr-FR');
-    doc.fillColor('#64748b').fontSize(7.5).font('Helvetica').text(
-      `Généré le ${genDate}`, W - 140, footerY + 10, { width: 100, align: 'right', lineBreak: false },
-    );
+    doc
+      .fillColor('#64748b')
+      .fontSize(7.5)
+      .font('Helvetica')
+      .text(`Généré le ${genDate}`, W - 140, footerY + 10, {
+        width: 100,
+        align: 'right',
+        lineBreak: false,
+      });
 
-    doc.fillColor('#475569').fontSize(7.5).font('Helvetica').text(
-      'DonNation — donnation.io', 40, footerY + 26, { width: W - 80, align: 'center', lineBreak: false },
-    );
+    doc
+      .fillColor('#475569')
+      .fontSize(7.5)
+      .font('Helvetica')
+      .text('DonNation — donnation.io', 40, footerY + 26, {
+        width: W - 80,
+        align: 'center',
+        lineBreak: false,
+      });
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────────

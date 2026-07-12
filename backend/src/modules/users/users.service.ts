@@ -37,7 +37,9 @@ export class UsersService {
   }
 
   findByPasswordResetTokenHash(tokenHash: string): Promise<User | null> {
-    return this.prisma.user.findFirst({ where: { passwordResetTokenHash: tokenHash } });
+    return this.prisma.user.findFirst({
+      where: { passwordResetTokenHash: tokenHash },
+    });
   }
 
   createDonorWithEmail(data: CreateEmailDonorInput): Promise<User> {
@@ -78,7 +80,11 @@ export class UsersService {
     });
   }
 
-  linkGoogleAccount(userId: string, googleId: string, displayName?: string | null): Promise<User> {
+  linkGoogleAccount(
+    userId: string,
+    googleId: string,
+    displayName?: string | null,
+  ): Promise<User> {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -89,7 +95,11 @@ export class UsersService {
     });
   }
 
-  upsertWalletNonce(walletAddress: string, nonce: string, expiresAt: Date): Promise<User> {
+  upsertWalletNonce(
+    walletAddress: string,
+    nonce: string,
+    expiresAt: Date,
+  ): Promise<User> {
     return this.prisma.user.upsert({
       where: { walletAddress },
       create: {
@@ -114,10 +124,17 @@ export class UsersService {
     });
   }
 
-  setPasswordResetToken(userId: string, tokenHash: string, expiresAt: Date): Promise<User> {
+  setPasswordResetToken(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ): Promise<User> {
     return this.prisma.user.update({
       where: { id: userId },
-      data: { passwordResetTokenHash: tokenHash, passwordResetExpiresAt: expiresAt },
+      data: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetExpiresAt: expiresAt,
+      },
     });
   }
 
@@ -135,7 +152,10 @@ export class UsersService {
   linkWalletAddress(userId: string, walletAddress: string): Promise<User> {
     return this.prisma.user.update({
       where: { id: userId },
-      data: { walletAddress: walletAddress.toLowerCase(), authProvider: AuthProvider.WALLET },
+      data: {
+        walletAddress: walletAddress.toLowerCase(),
+        authProvider: AuthProvider.WALLET,
+      },
     });
   }
 

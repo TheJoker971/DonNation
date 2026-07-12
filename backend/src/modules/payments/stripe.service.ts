@@ -8,7 +8,9 @@ import { ReceiptService } from '../documents/receipt.service';
 import { hashStripePaymentIntent } from './utils/payment-hash.util';
 
 type StripeClient = Stripe.Stripe;
-type StripeWebhookEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
+type StripeWebhookEvent = ReturnType<
+  StripeClient['webhooks']['constructEvent']
+>;
 type StripePaymentIntent = StripeWebhookEvent['data']['object'] & {
   id: string;
   metadata?: { donationId?: string };
@@ -51,10 +53,16 @@ export class StripeService {
   }
 
   isCryptoPaymentsEnabled(): boolean {
-    return this.config.get<string>('STRIPE_CRYPTO_PAYMENTS_ENABLED', 'true') !== 'false';
+    return (
+      this.config.get<string>('STRIPE_CRYPTO_PAYMENTS_ENABLED', 'true') !==
+      'false'
+    );
   }
 
-  async createConnectAccount(associationId: string, email: string): Promise<string> {
+  async createConnectAccount(
+    associationId: string,
+    email: string,
+  ): Promise<string> {
     const stripe = this.requireStripe();
 
     const capabilities: ConnectCapabilities = {
@@ -77,7 +85,9 @@ export class StripeService {
     return account.id;
   }
 
-  async requestCryptoPaymentsCapability(stripeAccountId: string): Promise<boolean> {
+  async requestCryptoPaymentsCapability(
+    stripeAccountId: string,
+  ): Promise<boolean> {
     if (!this.isCryptoPaymentsEnabled()) {
       return false;
     }
@@ -137,7 +147,9 @@ export class StripeService {
     }
 
     if (!donation.association.stripeOnboardingComplete) {
-      throw new BadRequestException('Association Stripe onboarding is not complete');
+      throw new BadRequestException(
+        'Association Stripe onboarding is not complete',
+      );
     }
 
     const connectAccountId = donation.association.stripeConnectAccountId;
@@ -161,9 +173,13 @@ export class StripeService {
       description: `Donation to ${donation.association.name}`,
     };
 
-    const paymentMethodTypes = cryptoRequested ? (['card', 'crypto'] as const) : (['card'] as const);
+    const paymentMethodTypes = cryptoRequested
+      ? (['card', 'crypto'] as const)
+      : (['card'] as const);
 
-    let paymentIntent: Awaited<ReturnType<StripeClient['paymentIntents']['create']>>;
+    let paymentIntent: Awaited<
+      ReturnType<StripeClient['paymentIntents']['create']>
+    >;
     let cryptoAvailable = cryptoRequested;
 
     try {
@@ -195,11 +211,16 @@ export class StripeService {
     return {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
-      paymentMethods: cryptoAvailable ? (['card', 'crypto'] as const) : (['card'] as const),
+      paymentMethods: cryptoAvailable
+        ? (['card', 'crypto'] as const)
+        : (['card'] as const),
     };
   }
 
-  constructWebhookEvent(payload: Buffer, signature: string): StripeWebhookEvent {
+  constructWebhookEvent(
+    payload: Buffer,
+    signature: string,
+  ): StripeWebhookEvent {
     const stripe = this.requireStripe();
     const webhookSecret = this.config.get<string>('STRIPE_WEBHOOK_SECRET');
 
@@ -211,7 +232,9 @@ export class StripeService {
   }
 
   async handleWebhookEvent(event: StripeWebhookEvent): Promise<void> {
-    const existing = await this.prisma.stripeEvent.findUnique({ where: { id: event.id } });
+    const existing = await this.prisma.stripeEvent.findUnique({
+      where: { id: event.id },
+    });
     if (existing) {
       this.logger.debug(`Stripe event ${event.id} already processed`);
       return;
@@ -219,10 +242,10 @@ export class StripeService {
 
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await this.handlePaymentIntentSucceeded(event.data.object as StripePaymentIntent);
+        await this.handlePaymentIntentSucceeded(event.data.object);
         break;
       case 'account.updated':
-        await this.handleAccountUpdated(event.data.object as StripeConnectAccount);
+        await this.handleAccountUpdated(event.data.object);
         break;
       default:
         this.logger.debug(`Unhandled Stripe event type: ${event.type}`);
@@ -233,10 +256,14 @@ export class StripeService {
     });
   }
 
-  private async handlePaymentIntentSucceeded(paymentIntent: StripePaymentIntent) {
+  private async handlePaymentIntentSucceeded(
+    paymentIntent: StripePaymentIntent,
+  ) {
     const donationId = paymentIntent.metadata?.donationId;
     if (!donationId) {
-      this.logger.warn(`payment_intent.succeeded without donationId: ${paymentIntent.id}`);
+      this.logger.warn(
+        `payment_intent.succeeded without donationId: ${paymentIntent.id}`,
+      );
       return;
     }
 
@@ -246,11 +273,16 @@ export class StripeService {
     });
 
     if (!donation) {
-      this.logger.warn(`Donation not found for payment intent ${paymentIntent.id}`);
+      this.logger.warn(
+        `Donation not found for payment intent ${paymentIntent.id}`,
+      );
       return;
     }
 
-    if (donation.status === DonationStatus.PAID || donation.status === DonationStatus.COMPLETED) {
+    if (
+      donation.status === DonationStatus.PAID ||
+      donation.status === DonationStatus.COMPLETED
+    ) {
       return;
     }
 
@@ -285,7 +317,10 @@ export class StripeService {
     try {
       await this.receiptService.ensureReceipt(donationId);
     } catch (error) {
-      this.logger.error(`Receipt generation failed for donation ${donationId}`, error);
+      this.logger.error(
+        `Receipt generation failed for donation ${donationId}`,
+        error,
+      );
     }
   }
 
@@ -295,7 +330,9 @@ export class StripeService {
       return;
     }
 
-    const onboardingComplete = Boolean(account.charges_enabled && account.details_submitted);
+    const onboardingComplete = Boolean(
+      account.charges_enabled && account.details_submitted,
+    );
     const cryptoActive = account.capabilities?.crypto_payments === 'active';
 
     await this.prisma.association.updateMany({

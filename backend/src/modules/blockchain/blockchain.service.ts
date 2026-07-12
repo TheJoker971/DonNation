@@ -26,7 +26,9 @@ export class BlockchainService {
   constructor(private readonly config: ConfigService) {
     const rpcUrl = this.config.get<string>('BASE_SEPOLIA_RPC_URL');
     const privateKey = this.config.get<string>('BLOCKCHAIN_PRIVATE_KEY');
-    const protocolAddress = this.config.get<string>('DON_NATION_PROTOCOL_ADDRESS');
+    const protocolAddress = this.config.get<string>(
+      'DON_NATION_PROTOCOL_ADDRESS',
+    );
 
     this.chainId = Number(this.config.get<string>('CHAIN_ID', '84532'));
     this.enabled = Boolean(rpcUrl && privateKey && protocolAddress);
@@ -35,13 +37,19 @@ export class BlockchainService {
       this.provider = null;
       this.wallet = null;
       this.protocol = null;
-      this.logger.warn('Blockchain not configured — on-chain actions are skipped');
+      this.logger.warn(
+        'Blockchain not configured — on-chain actions are skipped',
+      );
       return;
     }
 
     this.provider = new JsonRpcProvider(rpcUrl);
     this.wallet = new Wallet(privateKey!, this.provider);
-    this.protocol = new Contract(protocolAddress!, DON_NATION_PROTOCOL_ABI, this.wallet);
+    this.protocol = new Contract(
+      protocolAddress!,
+      DON_NATION_PROTOCOL_ABI,
+      this.wallet,
+    );
   }
 
   isEnabled(): boolean {
@@ -52,13 +60,17 @@ export class BlockchainService {
     return this.chainId;
   }
 
-  async getAssociationConfig(associationId: string): Promise<AssociationOnChainConfig | null> {
+  async getAssociationConfig(
+    associationId: string,
+  ): Promise<AssociationOnChainConfig | null> {
     if (!this.protocol) {
       return null;
     }
 
     const bytes32Id = associationUuidToBytes32(associationId);
-    const config = (await this.protocol.getAssociation(bytes32Id)) as AssociationOnChainConfig;
+    const config = (await this.protocol.getAssociation(
+      bytes32Id,
+    )) as AssociationOnChainConfig;
     return config;
   }
 
@@ -67,14 +79,18 @@ export class BlockchainService {
     const bytes32Id = associationUuidToBytes32(associationId);
     const tx = await protocol.registerAssociation(bytes32Id);
     const receipt = await tx.wait();
-    this.logger.log(`Association ${associationId} registered on-chain: ${receipt.hash}`);
+    this.logger.log(
+      `Association ${associationId} registered on-chain: ${receipt.hash}`,
+    );
     return receipt.hash as string;
   }
 
   async ensureAssociationActive(associationId: string): Promise<void> {
     const protocol = this.requireProtocol();
     const bytes32Id = associationUuidToBytes32(associationId);
-    const config = (await protocol.getAssociation(bytes32Id)) as AssociationOnChainConfig;
+    const config = (await protocol.getAssociation(
+      bytes32Id,
+    )) as AssociationOnChainConfig;
 
     if (!config.registered) {
       const tx = await protocol.registerAssociation(bytes32Id);
@@ -93,7 +109,9 @@ export class BlockchainService {
   async deactivateAssociation(associationId: string): Promise<void> {
     const protocol = this.requireProtocol();
     const bytes32Id = associationUuidToBytes32(associationId);
-    const config = (await protocol.getAssociation(bytes32Id)) as AssociationOnChainConfig;
+    const config = (await protocol.getAssociation(
+      bytes32Id,
+    )) as AssociationOnChainConfig;
 
     if (config.registered && config.active) {
       const tx = await protocol.setAssociationActive(bytes32Id);
@@ -135,7 +153,9 @@ export class BlockchainService {
   }
 
   private parseInvoiceMintedTokenId(
-    receipt: { logs: Array<{ address: string; topics: string[]; data: string }> },
+    receipt: {
+      logs: Array<{ address: string; topics: string[]; data: string }>;
+    },
     invoicesAddress: string,
   ): number | null {
     const iface = new Interface(DONATION_INVOICES_ABI);

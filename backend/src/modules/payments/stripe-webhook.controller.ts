@@ -28,7 +28,10 @@ export class StripeWebhookController {
       throw new BadRequestException('Missing stripe-signature header');
     }
 
-    const event = this.stripeService.constructWebhookEvent(req.rawBody, signature);
+    const event = this.stripeService.constructWebhookEvent(
+      req.rawBody,
+      signature,
+    );
     await this.stripeService.handleWebhookEvent(event);
 
     return { received: true };

@@ -82,17 +82,29 @@ export class AuthService {
     if (!user) {
       const byEmail = await this.usersService.findByEmail(payload.email);
       if (byEmail && byEmail.role !== Role.DONOR) {
-        throw new ConflictException('Email already used by a non-donor account');
+        throw new ConflictException(
+          'Email already used by a non-donor account',
+        );
       }
       if (byEmail) {
-        user = await this.usersService.linkGoogleAccount(byEmail.id, payload.sub, payload.name);
+        user = await this.usersService.linkGoogleAccount(
+          byEmail.id,
+          payload.sub,
+          payload.name,
+        );
       } else {
-        user = await this.createGoogleDonor(payload.sub, payload.email, payload.name);
+        user = await this.createGoogleDonor(
+          payload.sub,
+          payload.email,
+          payload.name,
+        );
       }
     }
 
     if (user.role !== Role.DONOR) {
-      throw new UnauthorizedException('Google login is only available for donors');
+      throw new UnauthorizedException(
+        'Google login is only available for donors',
+      );
     }
 
     return this.buildAuthResponse(user);
@@ -116,7 +128,9 @@ export class AuthService {
     const donor = await this.usersService.findByWalletAddress(normalized);
 
     if (!donor?.walletAuthNonce || !donor.walletAuthNonceExpiresAt) {
-      throw new UnauthorizedException('Wallet nonce not found — request a new one');
+      throw new UnauthorizedException(
+        'Wallet nonce not found — request a new one',
+      );
     }
 
     if (donor.walletAuthNonceExpiresAt.getTime() < Date.now()) {
@@ -124,10 +138,15 @@ export class AuthService {
     }
 
     if (donor.role !== Role.DONOR) {
-      throw new UnauthorizedException('Wallet login is only available for donors');
+      throw new UnauthorizedException(
+        'Wallet login is only available for donors',
+      );
     }
 
-    const message = this.buildWalletSignMessage(normalized, donor.walletAuthNonce);
+    const message = this.buildWalletSignMessage(
+      normalized,
+      donor.walletAuthNonce,
+    );
     let recovered: string;
     try {
       recovered = verifyMessage(message, signature).toLowerCase();
@@ -154,28 +173,45 @@ export class AuthService {
       const tokenHash = createHash('sha256').update(rawToken).digest('hex');
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-      await this.usersService.setPasswordResetToken(user.id, tokenHash, expiresAt);
+      await this.usersService.setPasswordResetToken(
+        user.id,
+        tokenHash,
+        expiresAt,
+      );
 
-      const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
+      const appUrl = this.config.get<string>(
+        'APP_URL',
+        'http://localhost:3000',
+      );
       await this.mailService.sendPasswordResetEmail(
         user.email,
         `${appUrl}/reset-password?token=${rawToken}`,
       );
     }
 
-    return { message: 'Si un compte éligible existe, un email de réinitialisation a été envoyé.' };
+    return {
+      message:
+        'Si un compte éligible existe, un email de réinitialisation a été envoyé.',
+    };
   }
 
   async resetPassword(token: string, password: string) {
     const tokenHash = createHash('sha256').update(token).digest('hex');
-    const user = await this.usersService.findByPasswordResetTokenHash(tokenHash);
+    const user =
+      await this.usersService.findByPasswordResetTokenHash(tokenHash);
 
-    if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt.getTime() < Date.now()) {
+    if (
+      !user ||
+      !user.passwordResetExpiresAt ||
+      user.passwordResetExpiresAt.getTime() < Date.now()
+    ) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
     if (user.role !== Role.ASSOCIATION && user.role !== Role.ADMIN) {
-      throw new BadRequestException('Password reset not allowed for this account');
+      throw new BadRequestException(
+        'Password reset not allowed for this account',
+      );
     }
 
     const passwordHash = await bcrypt.hash(password, this.saltRounds);
@@ -193,14 +229,21 @@ export class AuthService {
     return this.usersService.toPublic(user);
   }
 
-  private async createGoogleDonor(googleId: string, email: string, name?: string | null) {
+  private async createGoogleDonor(
+    googleId: string,
+    email: string,
+    name?: string | null,
+  ) {
     const encryptionKey = this.config.get<string>('WALLET_ENCRYPTION_KEY');
     if (!encryptionKey) {
       throw new BadRequestException('Wallet encryption is not configured');
     }
 
     const wallet = Wallet.createRandom();
-    const walletPrivateKeyEncrypted = encryptWalletPrivateKey(wallet.privateKey, encryptionKey);
+    const walletPrivateKeyEncrypted = encryptWalletPrivateKey(
+      wallet.privateKey,
+      encryptionKey,
+    );
 
     return this.usersService.createDonorWithGoogle({
       email,
