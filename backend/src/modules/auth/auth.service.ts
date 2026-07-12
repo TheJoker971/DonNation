@@ -163,7 +163,7 @@ export class AuthService {
       );
     }
 
-    return { message: 'If an eligible account exists, a reset email has been sent.' };
+    return { message: 'Si un compte éligible existe, un email de réinitialisation a été envoyé.' };
   }
 
   async resetPassword(token: string, password: string) {

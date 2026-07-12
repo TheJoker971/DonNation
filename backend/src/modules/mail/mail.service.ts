@@ -33,7 +33,12 @@ export class MailService {
 
     const smtpHost = this.config.get<string>('SMTP_HOST');
     if (!smtpHost) {
-      this.logger.warn(`Mail not configured — password reset link for ${to}: ${resetUrl}`);
+      this.logger.warn('═══════════════════════════════════════════════════════');
+      this.logger.warn('  MAIL NON CONFIGURÉ — lien de reset (dev uniquement)');
+      this.logger.warn(`  Destinataire : ${to}`);
+      this.logger.warn(`  Lien         : ${resetUrl}`);
+      this.logger.warn('  → Ajouter RESEND_API_KEY ou SMTP_HOST dans .env');
+      this.logger.warn('═══════════════════════════════════════════════════════');
       return;
     }
 
