@@ -84,11 +84,9 @@ export default function LoginPageContent() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="block text-sm font-semibold text-slate-700">Mot de passe</label>
-            {isAssociationMode && (
-              <Link href="/forgot-password" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
-                Mot de passe oublié ?
-              </Link>
-            )}
+            <Link href="/forgot-password" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+              Mot de passe oublié ?
+            </Link>
           </div>
           <input
             type="password"
