@@ -80,9 +80,8 @@ stripe listen --forward-to localhost:3001/api/v1/payments/stripe/webhook \
 ## Docker unifié (alternative)
 
 ```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.local.example frontend/.env.local
-docker compose -f docker-compose.dev.yml up --build
+cd docker-donnation
+docker compose -f docker-compose.local.yml up --build or docker compose -f docker-compose.prod.yml up --build
 ```
 
 Si le déploiement auto des contrats échoue, utiliser le démarrage manuel ci-dessus.
