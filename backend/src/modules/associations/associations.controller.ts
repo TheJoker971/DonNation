@@ -123,7 +123,9 @@ export class AssociationsController {
       }
     }
 
-    const captionList: string[] = captions ? JSON.parse(captions) : [];
+    const captionList: string[] = captions
+      ? (JSON.parse(captions) as string[])
+      : [];
     return this.associationsService.addPhotos(user.sub, photos, captionList);
   }
 

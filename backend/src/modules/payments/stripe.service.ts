@@ -110,10 +110,7 @@ export class StripeService {
     }
   }
 
-  async createAccountLink(
-    stripeAccountId: string,
-    _associationId: string,
-  ): Promise<{ url: string }> {
+  async createAccountLink(stripeAccountId: string): Promise<{ url: string }> {
     const stripe = this.requireStripe();
     const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
 

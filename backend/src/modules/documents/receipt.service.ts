@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
+import { createWriteStream, mkdirSync } from 'fs';
 import { join } from 'path';
 import PDFDocument from 'pdfkit';
 import { PrismaService } from '../../prisma/prisma.service';

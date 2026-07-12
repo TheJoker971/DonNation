@@ -104,10 +104,7 @@ export class AssociationsService {
       });
     }
 
-    return this.stripeService.createAccountLink(
-      stripeConnectAccountId,
-      association.id,
-    );
+    return this.stripeService.createAccountLink(stripeConnectAccountId);
   }
 
   async findPublicCatalog() {

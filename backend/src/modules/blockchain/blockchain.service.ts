@@ -14,6 +14,11 @@ type AssociationOnChainConfig = {
   invoicesUri: string;
 };
 
+type TxReceipt = {
+  hash: string;
+  logs: Array<{ address: string; topics: string[]; data: string }>;
+};
+
 @Injectable()
 export class BlockchainService {
   private readonly logger = new Logger(BlockchainService.name);
@@ -77,12 +82,14 @@ export class BlockchainService {
   async registerAssociation(associationId: string): Promise<string> {
     const protocol = this.requireProtocol();
     const bytes32Id = associationUuidToBytes32(associationId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const tx = await protocol.registerAssociation(bytes32Id);
-    const receipt = await tx.wait();
+
+    const receipt = await (tx as { wait: () => Promise<TxReceipt> }).wait();
     this.logger.log(
       `Association ${associationId} registered on-chain: ${receipt.hash}`,
     );
-    return receipt.hash as string;
+    return receipt.hash;
   }
 
   async ensureAssociationActive(associationId: string): Promise<void> {
@@ -93,15 +100,19 @@ export class BlockchainService {
     )) as AssociationOnChainConfig;
 
     if (!config.registered) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const tx = await protocol.registerAssociation(bytes32Id);
-      await tx.wait();
+
+      await (tx as { wait: () => Promise<unknown> }).wait();
       this.logger.log(`Association ${associationId} registered on-chain`);
       return;
     }
 
     if (!config.active) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const tx = await protocol.setAssociationActive(bytes32Id);
-      await tx.wait();
+
+      await (tx as { wait: () => Promise<unknown> }).wait();
       this.logger.log(`Association ${associationId} activated on-chain`);
     }
   }
@@ -114,8 +125,10 @@ export class BlockchainService {
     )) as AssociationOnChainConfig;
 
     if (config.registered && config.active) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const tx = await protocol.setAssociationActive(bytes32Id);
-      await tx.wait();
+
+      await (tx as { wait: () => Promise<unknown> }).wait();
       this.logger.log(`Association ${associationId} deactivated on-chain`);
     }
   }
@@ -131,6 +144,7 @@ export class BlockchainService {
     const protocol = this.requireProtocol();
     const bytes32AssociationId = associationUuidToBytes32(params.associationId);
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const tx = await protocol.mintInvoice(
       params.to,
       bytes32AssociationId,
@@ -141,7 +155,7 @@ export class BlockchainService {
       '',
     );
 
-    const receipt = await tx.wait();
+    const receipt = await (tx as { wait: () => Promise<TxReceipt> }).wait();
     const invoicesAddress = (await protocol.donationInvoices()) as string;
     const tokenId = this.parseInvoiceMintedTokenId(receipt, invoicesAddress);
 
@@ -149,7 +163,7 @@ export class BlockchainService {
       throw new Error('InvoiceMinted event not found in transaction receipt');
     }
 
-    return { txHash: receipt.hash as string, tokenId };
+    return { txHash: receipt.hash, tokenId };
   }
 
   private parseInvoiceMintedTokenId(
