@@ -1,0 +1,15 @@
+uploads/*
+!uploads/.gitkeep
+
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Env & secrets
+.env
+.env.*
+
+# Build info
+tsconfig.build.tsbuildinfo

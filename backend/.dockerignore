@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+coverage
+.env*
+.DS_Store
+.git
+npm-debug.log
+yarn-error.log
+logs
+*.log
+Dockerfile
+docker-compose*.yml
+/.idea
+/.vscode
+prisma/migrations
+tsconfig.build.tsbuildinfo
