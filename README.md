@@ -3,7 +3,7 @@
 Plateforme de dons associatifs — NestJS, Next.js, Stripe Connect, reçus NFT on-chain (Anvil / Base).
 
 [![CI](https://github.com/TheJoker971/DonNation/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/TheJoker971/DonNation/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/TheJoker971/DonNation/dev)](https://github.com/TheJoker971/DonNation/commits/dev)
 
 
