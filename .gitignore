@@ -32,3 +32,6 @@ npm-debug.log*
 
 # Test coverage
 coverage/
+
+# Submodule nested deps (Foundry)
+smart-contracts/lib/openzeppelin-contracts/lib/
