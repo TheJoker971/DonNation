@@ -31,6 +31,8 @@ jobs:
       JWT_SECRET: ci-test-secret
       WALLET_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       APP_URL: http://localhost:3000
+      ADMIN_EMAIL: admin@donnation.local
+      ADMIN_PASSWORD: DonNationAdmin123!
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,6 +43,7 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npx prisma migrate deploy
+      - run: npx prisma db seed
       - run: npm run lint
       - run: npm run test
       - run: npm run test:e2e

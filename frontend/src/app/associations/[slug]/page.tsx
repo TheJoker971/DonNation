@@ -58,8 +58,10 @@ function PhotoCarousel({ photos }: { photos: { url: string; caption?: string | n
 
   useEffect(() => {
     if (photos.length <= 1) return;
-    resetTimer();
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setCurrent((c) => (c + 1) % photos.length), 4500);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos.length]);
 
   if (photos.length === 0) return null;

@@ -224,9 +224,9 @@ export default function AssociationDashboardPage() {
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-semibold text-slate-900">Photos d'événements</h2>
+                      <h2 className="text-xl font-semibold text-slate-900">Photos d&apos;événements</h2>
                       <p className="mt-1 text-sm text-slate-500">
-                        Jusqu'à 10 photos — elles s'affichent en carousel sur votre page publique.
+                        {"Jusqu'à 10 photos — elles s'affichent en carousel sur votre page publique."}
                       </p>
                     </div>
                     <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">

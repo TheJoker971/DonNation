@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 interface AssociationAvatarProps {
   name: string;
   logoUrl?: string | null;
