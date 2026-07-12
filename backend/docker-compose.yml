@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: donnation-postgres
+    restart: unless-stopped
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: donnation
+      POSTGRES_PASSWORD: donnation
+      POSTGRES_DB: donnation
+    volumes:
+      - donnation_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  donnation_postgres_data:

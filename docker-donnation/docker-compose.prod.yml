@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: donnation
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: donnation
+    volumes:
+      - db_prod_data:/var/lib/postgresql/data
+    networks:
+      - donnation_net
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    env_file:
+      - ../backend/.env
+    environment:
+      DATABASE_URL: "postgres://donnation:${DB_PASSWORD}@db:5432/donnation"
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3001:3000"
+    depends_on:
+      - db
+    networks:
+      - donnation_net
+    secrets:
+      - db_password
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: "https://yourdomain.com"
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_REPLACE_ME"
+    environment:
+      NEXT_PUBLIC_API_URL: https://yourdomain.com
+      NODE_ENV: production
+    ports:
+      - "80:3000"
+    depends_on:
+      - backend
+    networks:
+      - donnation_net
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+
+volumes:
+  db_prod_data:
+
+networks:
+  donnation_net:
+    driver: bridge
