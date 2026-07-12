@@ -1,31 +1,31 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { api } from '@/lib/api'
-import { useAuth } from '@/lib/auth'
-import type { Association } from '@/lib/types'
-import { AssociationAvatar } from '@/components/AssociationAvatar'
-import { ApiErrorMessage } from '@/components/ApiErrorMessage'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import type { Association } from '@/lib/types';
+import { AssociationCard } from '@/components/AssociationCard';
+import { ApiErrorMessage } from '@/components/ApiErrorMessage';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export default function HomePage() {
-  const { user } = useAuth()
-  const [associations, setAssociations] = useState<Association[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth();
+  const [associations, setAssociations] = useState<Association[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api<Association[]>('/associations')
       .then((data) => {
-        setAssociations(data.slice(0, 6))
-        setError(null)
+        setAssociations(data.slice(0, 6));
+        setError(null);
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Impossible de charger les associations')
+        setError(err instanceof Error ? err.message : 'Impossible de charger les associations');
       })
-      .finally(() => setLoading(false))
-  }, [])
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="space-y-16">
@@ -44,8 +44,8 @@ export default function HomePage() {
             </div>
 
             <p className="max-w-2xl text-xl leading-relaxed text-slate-600">
-              Soutenez des associations vérifiées par carte bancaire. Chaque don est tracé et
-              certifié par un reçu numérique.
+              Soutenez des associations vérifiées par carte bancaire. Chaque don est tracé, certifié
+              on-chain et accompagné d&apos;un reçu PDF.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
@@ -64,11 +64,9 @@ export default function HomePage() {
 
       <section className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 lg:text-4xl">
-            Associations vérifiées
-          </h2>
+          <h2 className="text-3xl font-bold text-slate-900 lg:text-4xl">Associations à soutenir</h2>
           <p className="mt-2 text-lg text-slate-600">
-            Données en direct depuis l&apos;API DonNation
+            Parcourez les profils, découvrez leurs missions et choisissez votre impact.
           </p>
         </div>
 
@@ -82,51 +80,12 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {associations.map((association, idx) => (
-              <div
+            {associations.map((association, index) => (
+              <AssociationCard
                 key={association.id}
-                className="card group animate-slide-in"
-                style={{ animationDelay: `${idx * 100}ms` }}
-              >
-                <div className="space-y-4">
-                  <AssociationAvatar name={association.name} logoUrl={association.logoUrl} />
-
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">{association.name}</h3>
-                    <p className="mt-1 text-sm text-slate-500">{association.slug}</p>
-                  </div>
-
-                  <p className="line-clamp-3 text-sm text-slate-600">
-                    {association.description || 'Aucune description.'}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <span className="badge badge-success text-xs">Approuvée</span>
-                    {association.stripeOnboardingComplete ? (
-                      <span className="badge badge-success text-xs">Prête à recevoir</span>
-                    ) : (
-                      <span className="badge badge-warning text-xs">Stripe en cours</span>
-                    )}
-                  </div>
-
-                  {association.stripeOnboardingComplete ? (
-                    <Link
-                      href={`/associations/${association.slug}/donate`}
-                      className="btn-primary mt-4 block text-center text-sm"
-                    >
-                      Faire un don
-                    </Link>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled
-                      className="btn-primary mt-4 block w-full cursor-not-allowed text-center text-sm opacity-50"
-                    >
-                      Dons indisponibles
-                    </button>
-                  )}
-                </div>
-              </div>
+                association={association}
+                animationDelay={index * 100}
+              />
             ))}
           </div>
         )}
@@ -150,32 +109,34 @@ export default function HomePage() {
         <div className="grid gap-6 md:grid-cols-3">
           {[
             {
-              icon: '👤',
-              title: 'Créez votre compte',
+              step: '1',
+              title: 'Découvrez une association',
               description:
-                'Inscrivez-vous en tant que donateur avec votre email et mot de passe.',
+                'Consultez le profil, la mission et l\'impact de chaque structure vérifiée.',
             },
             {
-              icon: '💳',
+              step: '2',
               title: 'Faites un don sécurisé',
               description:
-                'Choisissez une association vérifiée et payez par carte via Stripe.',
+                'Payez par carte via Stripe Connect. L\'association reçoit les fonds en euros.',
             },
             {
-              icon: '🎖️',
-              title: 'Recevez votre reçu certifié',
+              step: '3',
+              title: 'Recevez votre preuve',
               description:
-                'Obtenez un reçu numérique tracé après chaque don validé.',
+                'Obtenez un reçu PDF et un certificat on-chain — preuve immuable de votre générosité.',
             },
           ].map((feature) => (
             <div key={feature.title} className="card space-y-4">
-              <div className="text-5xl">{feature.icon}</div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
+                {feature.step}
+              </div>
               <h3 className="text-lg font-bold text-slate-900">{feature.title}</h3>
-              <p className="text-sm text-slate-600">{feature.description}</p>
+              <p className="text-sm leading-relaxed text-slate-600">{feature.description}</p>
             </div>
           ))}
         </div>
       </section>
     </div>
-  )
+  );
 }

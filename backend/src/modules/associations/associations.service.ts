@@ -104,7 +104,115 @@ export class AssociationsService {
       orderBy: { name: 'asc' },
     });
 
-    return associations.map((association) => this.toCatalogAssociation(association));
+    const statsByAssociation = await this.loadAssociationStats(associations.map((a) => a.id));
+
+    return associations.map((association) => ({
+      ...this.toCatalogAssociation(association),
+      stats: statsByAssociation.get(association.id) ?? this.emptyAssociationStats(),
+    }));
+  }
+
+  async findPublicBySlug(slug: string) {
+    const association = await this.prisma.association.findFirst({
+      where: { slug, status: AssociationStatus.APPROVED },
+    });
+
+    if (!association) {
+      throw new NotFoundException('Association not found');
+    }
+
+    const statsMap = await this.loadAssociationStats([association.id]);
+    const stats = statsMap.get(association.id) ?? this.emptyAssociationStats();
+
+    const recentDonations = await this.prisma.donation.findMany({
+      where: {
+        associationId: association.id,
+        status: { in: this.getPaidDonationStatuses() },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+      select: {
+        amountEur: true,
+        createdAt: true,
+        isAnonymous: true,
+        donor: { select: { displayName: true } },
+      },
+    });
+
+    return {
+      ...this.toCatalogAssociation(association),
+      onChainRegistered: association.onChainRegistered,
+      stats,
+      recentSupporters: recentDonations.map((donation) => ({
+        displayName: donation.isAnonymous
+          ? 'Donateur anonyme'
+          : donation.donor.displayName || 'Donateur',
+        amountEur: donation.amountEur,
+        createdAt: donation.createdAt,
+      })),
+    };
+  }
+
+  private getPaidDonationStatuses(): DonationStatus[] {
+    return [DonationStatus.PAID, DonationStatus.MINTING, DonationStatus.COMPLETED];
+  }
+
+  private emptyAssociationStats() {
+    return {
+      totalRaisedEur: 0,
+      donationCount: 0,
+      donorCount: 0,
+    };
+  }
+
+  private async loadAssociationStats(associationIds: string[]) {
+    if (associationIds.length === 0) {
+      return new Map<string, ReturnType<typeof this.emptyAssociationStats>>();
+    }
+
+    const paidStatuses = this.getPaidDonationStatuses();
+
+    const [aggregates, donorGroups] = await Promise.all([
+      this.prisma.donation.groupBy({
+        by: ['associationId'],
+        where: {
+          associationId: { in: associationIds },
+          status: { in: paidStatuses },
+        },
+        _sum: { amountEur: true },
+        _count: { _all: true },
+      }),
+      this.prisma.donation.groupBy({
+        by: ['associationId', 'donorId'],
+        where: {
+          associationId: { in: associationIds },
+          status: { in: paidStatuses },
+        },
+      }),
+    ]);
+
+    const donorCountByAssociation = new Map<string, number>();
+    for (const row of donorGroups) {
+      donorCountByAssociation.set(
+        row.associationId,
+        (donorCountByAssociation.get(row.associationId) ?? 0) + 1,
+      );
+    }
+
+    const statsMap = new Map<string, ReturnType<typeof this.emptyAssociationStats>>();
+    for (const id of associationIds) {
+      statsMap.set(id, this.emptyAssociationStats());
+    }
+
+    for (const row of aggregates) {
+      statsMap.set(row.associationId, {
+        totalRaisedEur: row._sum.amountEur ?? 0,
+        donationCount: row._count._all,
+        donorCount: donorCountByAssociation.get(row.associationId) ?? 0,
+      });
+    }
+
+    return statsMap;
   }
 
   async findAllForAdmin(status?: AssociationStatus) {

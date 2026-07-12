@@ -131,7 +131,97 @@ let AssociationsService = AssociationsService_1 = class AssociationsService {
             where: { status: client_1.AssociationStatus.APPROVED },
             orderBy: { name: 'asc' },
         });
-        return associations.map((association) => this.toCatalogAssociation(association));
+        const statsByAssociation = await this.loadAssociationStats(associations.map((a) => a.id));
+        return associations.map((association) => ({
+            ...this.toCatalogAssociation(association),
+            stats: statsByAssociation.get(association.id) ?? this.emptyAssociationStats(),
+        }));
+    }
+    async findPublicBySlug(slug) {
+        const association = await this.prisma.association.findFirst({
+            where: { slug, status: client_1.AssociationStatus.APPROVED },
+        });
+        if (!association) {
+            throw new common_1.NotFoundException('Association not found');
+        }
+        const statsMap = await this.loadAssociationStats([association.id]);
+        const stats = statsMap.get(association.id) ?? this.emptyAssociationStats();
+        const recentDonations = await this.prisma.donation.findMany({
+            where: {
+                associationId: association.id,
+                status: { in: this.getPaidDonationStatuses() },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 8,
+            select: {
+                amountEur: true,
+                createdAt: true,
+                isAnonymous: true,
+                donor: { select: { displayName: true } },
+            },
+        });
+        return {
+            ...this.toCatalogAssociation(association),
+            onChainRegistered: association.onChainRegistered,
+            stats,
+            recentSupporters: recentDonations.map((donation) => ({
+                displayName: donation.isAnonymous
+                    ? 'Donateur anonyme'
+                    : donation.donor.displayName || 'Donateur',
+                amountEur: donation.amountEur,
+                createdAt: donation.createdAt,
+            })),
+        };
+    }
+    getPaidDonationStatuses() {
+        return [client_1.DonationStatus.PAID, client_1.DonationStatus.MINTING, client_1.DonationStatus.COMPLETED];
+    }
+    emptyAssociationStats() {
+        return {
+            totalRaisedEur: 0,
+            donationCount: 0,
+            donorCount: 0,
+        };
+    }
+    async loadAssociationStats(associationIds) {
+        if (associationIds.length === 0) {
+            return new Map();
+        }
+        const paidStatuses = this.getPaidDonationStatuses();
+        const [aggregates, donorGroups] = await Promise.all([
+            this.prisma.donation.groupBy({
+                by: ['associationId'],
+                where: {
+                    associationId: { in: associationIds },
+                    status: { in: paidStatuses },
+                },
+                _sum: { amountEur: true },
+                _count: { _all: true },
+            }),
+            this.prisma.donation.groupBy({
+                by: ['associationId', 'donorId'],
+                where: {
+                    associationId: { in: associationIds },
+                    status: { in: paidStatuses },
+                },
+            }),
+        ]);
+        const donorCountByAssociation = new Map();
+        for (const row of donorGroups) {
+            donorCountByAssociation.set(row.associationId, (donorCountByAssociation.get(row.associationId) ?? 0) + 1);
+        }
+        const statsMap = new Map();
+        for (const id of associationIds) {
+            statsMap.set(id, this.emptyAssociationStats());
+        }
+        for (const row of aggregates) {
+            statsMap.set(row.associationId, {
+                totalRaisedEur: row._sum.amountEur ?? 0,
+                donationCount: row._count._all,
+                donorCount: donorCountByAssociation.get(row.associationId) ?? 0,
+            });
+        }
+        return statsMap;
     }
     async findAllForAdmin(status) {
         const associations = await this.prisma.association.findMany({

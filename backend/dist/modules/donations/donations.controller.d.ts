@@ -67,6 +67,13 @@ export declare class DonationsController {
         createdAt: Date;
         updatedAt: Date;
     }[]>;
+    findMyStats(user: JwtPayload): Promise<{
+        totalDonatedEur: number;
+        totalPoints: number;
+        donationCount: number;
+        associationsSupported: number;
+        level: import("./utils/donor-level.util").DonorLevel;
+    }>;
     pay(user: JwtPayload, id: string): Promise<{
         clientSecret: string | null;
         paymentIntentId: string;

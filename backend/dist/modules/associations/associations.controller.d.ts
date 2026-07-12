@@ -6,6 +6,11 @@ export declare class AssociationsController {
     private readonly receiptService;
     constructor(associationsService: AssociationsService, receiptService: ReceiptService);
     findPublic(): Promise<{
+        stats: {
+            totalRaisedEur: number;
+            donationCount: number;
+            donorCount: number;
+        };
         id: string;
         name: string;
         slug: string;
@@ -76,5 +81,26 @@ export declare class AssociationsController {
     }>;
     startStripeOnboarding(user: JwtPayload): Promise<{
         url: string;
+    }>;
+    findPublicBySlug(slug: string): Promise<{
+        onChainRegistered: boolean;
+        stats: {
+            totalRaisedEur: number;
+            donationCount: number;
+            donorCount: number;
+        };
+        recentSupporters: {
+            displayName: string;
+            amountEur: number;
+            createdAt: Date;
+        }[];
+        id: string;
+        name: string;
+        slug: string;
+        description: string | null;
+        logoUrl: string | null;
+        stripeOnboardingComplete: boolean;
+        stripeCryptoPaymentsActive: boolean;
+        approvedAt: Date | null;
     }>;
 }

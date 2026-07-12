@@ -28,6 +28,11 @@ export class DonationsController {
     return this.donationsService.findMine(user.sub);
   }
 
+  @Get('me/stats')
+  findMyStats(@CurrentUser() user: JwtPayload) {
+    return this.donationsService.findDonorStats(user.sub);
+  }
+
   @Post(':id/pay')
   pay(@CurrentUser() user: JwtPayload, @Param('id', ParseUUIDPipe) id: string) {
     return this.donationsService.createPaymentIntent(user.sub, id);

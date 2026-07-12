@@ -38,6 +38,32 @@ export interface CreateDonationRequest {
   isAnonymous?: boolean;
 }
 
+export interface AssociationStats {
+  totalRaisedEur: number;
+  donationCount: number;
+  donorCount: number;
+}
+
+export interface AssociationSupporter {
+  displayName: string;
+  amountEur: number;
+  createdAt: string;
+}
+
+export interface AssociationProfile extends Association {
+  onChainRegistered?: boolean;
+  stats: AssociationStats;
+  recentSupporters?: AssociationSupporter[];
+}
+
+export interface DonorStats {
+  totalDonatedEur: number;
+  totalPoints: number;
+  donationCount: number;
+  associationsSupported: number;
+  level: 'bronze' | 'silver' | 'gold' | 'platinum';
+}
+
 export interface Association {
   id: string;
   name: string;
@@ -53,6 +79,7 @@ export interface Association {
   createdAt?: string;
   updatedAt?: string;
   owner?: User;
+  stats?: AssociationStats;
 }
 
 export interface Donation {

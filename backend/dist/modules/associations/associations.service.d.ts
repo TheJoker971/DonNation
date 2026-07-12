@@ -44,6 +44,11 @@ export declare class AssociationsService {
         url: string;
     }>;
     findPublicCatalog(): Promise<{
+        stats: {
+            totalRaisedEur: number;
+            donationCount: number;
+            donorCount: number;
+        };
         id: string;
         name: string;
         slug: string;
@@ -53,6 +58,30 @@ export declare class AssociationsService {
         stripeCryptoPaymentsActive: boolean;
         approvedAt: Date | null;
     }[]>;
+    findPublicBySlug(slug: string): Promise<{
+        onChainRegistered: boolean;
+        stats: {
+            totalRaisedEur: number;
+            donationCount: number;
+            donorCount: number;
+        };
+        recentSupporters: {
+            displayName: string;
+            amountEur: number;
+            createdAt: Date;
+        }[];
+        id: string;
+        name: string;
+        slug: string;
+        description: string | null;
+        logoUrl: string | null;
+        stripeOnboardingComplete: boolean;
+        stripeCryptoPaymentsActive: boolean;
+        approvedAt: Date | null;
+    }>;
+    private getPaidDonationStatuses;
+    private emptyAssociationStats;
+    private loadAssociationStats;
     findAllForAdmin(status?: AssociationStatus): Promise<{
         owner: {
             id: string;

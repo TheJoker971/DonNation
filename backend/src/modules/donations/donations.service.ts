@@ -3,6 +3,7 @@ import { AssociationStatus, DonationStatus, InvoiceStatus } from '@prisma/client
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
 import { StripeService } from '../payments/stripe.service';
+import { getDonorLevel } from './utils/donor-level.util';
 
 @Injectable()
 export class DonationsService {
@@ -74,6 +75,35 @@ export class DonationsService {
       association: donation.association,
       invoice: donation.invoice ? this.toPublicInvoice(donation.invoice) : null,
     }));
+  }
+
+  async findDonorStats(donorId: string) {
+    const paidStatuses: DonationStatus[] = [
+      DonationStatus.PAID,
+      DonationStatus.MINTING,
+      DonationStatus.COMPLETED,
+    ];
+
+    const donations = await this.prisma.donation.findMany({
+      where: { donorId, status: { in: paidStatuses } },
+      select: {
+        amountEur: true,
+        pointsEarned: true,
+        associationId: true,
+      },
+    });
+
+    const totalDonatedEur = donations.reduce((sum, d) => sum + d.amountEur, 0);
+    const totalPoints = donations.reduce((sum, d) => sum + d.pointsEarned, 0);
+    const associationsSupported = new Set(donations.map((d) => d.associationId)).size;
+
+    return {
+      totalDonatedEur,
+      totalPoints,
+      donationCount: donations.length,
+      associationsSupported,
+      level: getDonorLevel(totalPoints),
+    };
   }
 
   async createPaymentIntent(donorId: string, donationId: string) {

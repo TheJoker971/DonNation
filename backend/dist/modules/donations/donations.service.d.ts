@@ -66,6 +66,13 @@ export declare class DonationsService {
         createdAt: Date;
         updatedAt: Date;
     }[]>;
+    findDonorStats(donorId: string): Promise<{
+        totalDonatedEur: number;
+        totalPoints: number;
+        donationCount: number;
+        associationsSupported: number;
+        level: import("./utils/donor-level.util").DonorLevel;
+    }>;
     createPaymentIntent(donorId: string, donationId: string): Promise<{
         clientSecret: string | null;
         paymentIntentId: string;

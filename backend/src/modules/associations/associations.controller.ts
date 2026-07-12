@@ -80,4 +80,9 @@ export class AssociationsController {
   startStripeOnboarding(@CurrentUser() user: JwtPayload) {
     return this.associationsService.startStripeOnboarding(user.sub);
   }
+
+  @Get(':slug')
+  findPublicBySlug(@Param('slug') slug: string) {
+    return this.associationsService.findPublicBySlug(slug);
+  }
 }

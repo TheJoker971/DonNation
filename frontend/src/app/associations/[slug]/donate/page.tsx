@@ -6,7 +6,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import type { Association, CreateDonationRequest, PaymentIntentResponse } from '@/lib/types';
+import type { AssociationProfile, CreateDonationRequest, PaymentIntentResponse } from '@/lib/types';
 import { AssociationAvatar } from '@/components/AssociationAvatar';
 import { ApiErrorMessage } from '@/components/ApiErrorMessage';
 import { CheckoutForm } from '@/components/CheckoutForm';
@@ -22,7 +22,7 @@ interface DonatePageProps {
 export default function DonatePage({ params }: DonatePageProps) {
   const { slug } = params;
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const [association, setAssociation] = useState<Association | null>(null);
+  const [association, setAssociation] = useState<AssociationProfile | null>(null);
   const [amount, setAmount] = useState('50');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -33,13 +33,8 @@ export default function DonatePage({ params }: DonatePageProps) {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    api<Association[]>('/associations')
-      .then((items) => {
-        const found = items.find((item) => item.slug === slug);
-        if (!found) {
-          setError(`Aucune association approuvée avec le slug « ${slug} ».`);
-          return;
-        }
+    api<AssociationProfile>(`/associations/${slug}`)
+      .then((found) => {
         if (!found.stripeOnboardingComplete) {
           setError('Cette association n\'est pas encore prête à recevoir des dons.');
           return;
@@ -122,6 +117,18 @@ export default function DonatePage({ params }: DonatePageProps) {
 
   return (
     <div className="space-y-6">
+      <nav className="text-sm text-slate-500">
+        <Link href="/associations" className="hover:text-brand-600">
+          Associations
+        </Link>
+        <span className="mx-2">/</span>
+        <Link href={`/associations/${slug}`} className="hover:text-brand-600">
+          {association.name}
+        </Link>
+        <span className="mx-2">/</span>
+        <span className="font-medium text-slate-900">Faire un don</span>
+      </nav>
+
       <div className="rounded-3xl border bg-white p-8 shadow-sm">
         <div className="flex items-center gap-4">
           <AssociationAvatar name={association.name} logoUrl={association.logoUrl} size="lg" />

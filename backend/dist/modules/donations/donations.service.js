@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const stripe_service_1 = require("../payments/stripe.service");
+const donor_level_util_1 = require("./utils/donor-level.util");
 let DonationsService = class DonationsService {
     prisma;
     stripeService;
@@ -75,6 +76,31 @@ let DonationsService = class DonationsService {
             association: donation.association,
             invoice: donation.invoice ? this.toPublicInvoice(donation.invoice) : null,
         }));
+    }
+    async findDonorStats(donorId) {
+        const paidStatuses = [
+            client_1.DonationStatus.PAID,
+            client_1.DonationStatus.MINTING,
+            client_1.DonationStatus.COMPLETED,
+        ];
+        const donations = await this.prisma.donation.findMany({
+            where: { donorId, status: { in: paidStatuses } },
+            select: {
+                amountEur: true,
+                pointsEarned: true,
+                associationId: true,
+            },
+        });
+        const totalDonatedEur = donations.reduce((sum, d) => sum + d.amountEur, 0);
+        const totalPoints = donations.reduce((sum, d) => sum + d.pointsEarned, 0);
+        const associationsSupported = new Set(donations.map((d) => d.associationId)).size;
+        return {
+            totalDonatedEur,
+            totalPoints,
+            donationCount: donations.length,
+            associationsSupported,
+            level: (0, donor_level_util_1.getDonorLevel)(totalPoints),
+        };
     }
     async createPaymentIntent(donorId, donationId) {
         const donation = await this.prisma.donation.findFirst({

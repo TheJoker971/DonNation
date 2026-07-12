@@ -106,6 +106,26 @@ describe('Associations (e2e)', () => {
     const match = response.body.find((a: { id: string }) => a.id === associationId);
     expect(match).toBeDefined();
     expect(match.stripeOnboardingComplete).toBeDefined();
+    expect(match.stats).toBeDefined();
+    expect(match.stats.totalRaisedEur).toBeDefined();
     expect(match.stripeConnectAccountId).toBeUndefined();
+  });
+
+  it('exposes public profile by slug', async () => {
+    const catalog = await request(app.getHttpServer()).get('/api/v1/associations').expect(200);
+    const match = catalog.body.find((a: { id: string }) => a.id === associationId);
+    expect(match?.slug).toBeDefined();
+
+    const profile = await request(app.getHttpServer())
+      .get(`/api/v1/associations/${match.slug}`)
+      .expect(200);
+
+    expect(profile.body.name).toBe('Test Association');
+    expect(profile.body.stats).toEqual({
+      totalRaisedEur: 0,
+      donationCount: 0,
+      donorCount: 0,
+    });
+    expect(profile.body.recentSupporters).toEqual([]);
   });
 });

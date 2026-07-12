@@ -35,6 +35,9 @@ let DonationsController = class DonationsController {
     findMine(user) {
         return this.donationsService.findMine(user.sub);
     }
+    findMyStats(user) {
+        return this.donationsService.findDonorStats(user.sub);
+    }
     pay(user, id) {
         return this.donationsService.createPaymentIntent(user.sub, id);
     }
@@ -62,6 +65,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], DonationsController.prototype, "findMine", null);
+__decorate([
+    (0, common_1.Get)('me/stats'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], DonationsController.prototype, "findMyStats", null);
 __decorate([
     (0, common_1.Post)(':id/pay'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
