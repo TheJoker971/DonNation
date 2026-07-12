@@ -14,7 +14,6 @@ Plateforme de dons associatifs — NestJS, Next.js, Stripe Connect, reçus NFT o
 [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
 [![Slack](https://img.shields.io/badge/slack-openssf/scorecard-white.svg?logo=slack)](https://slack.openssf.org/#scorecard)
 
-<img align="right" src="artwork/openssf_security_compressed.png" width="200" height="400">
 
 ## Démarrage rapide (manuel — recommandé)
 
