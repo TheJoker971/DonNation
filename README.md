@@ -4,15 +4,12 @@ Plateforme de dons associatifs — NestJS, Next.js, Stripe Connect, reçus NFT o
 
 ## OpenSSF Scorecard
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/TheJoker971/DonNation/badge)](https://scorecard.dev/viewer/?uri=github.com/TheJoker971/DonNation)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/5621/badge)](https://www.bestpractices.dev/projects/5621)
-[![build](https://github.com/TheJoker971/DonNation/actions/workflows/main.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/main.yml)
+[![Build](https://github.com/TheJoker971/DonNation/actions/workflows/main.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/main.yml)
 [![CodeQL](https://github.com/TheJoker971/DonNation/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/codeql-analysis.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/TheJoker971/DonNation/v4.svg)](https://pkg.go.dev/github.com/TheJoker971/DonNation/v4)
-[![Go Report Card](https://goreportcard.com/badge/github.com/TheJoker971/DonNation/v4)](https://goreportcard.com/report/github.com/TheJoker971/DonNation/v4)
-[![codecov](https://codecov.io/gh/TheJoker971/DonNation/branch/main/graph/badge.svg?token=PMJ6NAN9J3)](https://codecov.io/gh/ossf/scorecard)
-[![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev)
-[![Slack](https://img.shields.io/badge/slack-openssf/scorecard-white.svg?logo=slack)](https://slack.openssf.org/#scorecard)
+[![License](https://img.shields.io/github/license/TheJoker971/DonNation)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/TheJoker971/DonNation)](https://github.com/TheJoker971/DonNation/releases)
+[![GitHub issues](https://img.shields.io/github/issues/TheJoker971/DonNation)](https://github.com/TheJoker971/DonNation/issues)
+[![GitHub stars](https://img.shields.io/github/stars/TheJoker971/DonNation?style=social)](https://github.com/TheJoker971/DonNation/stargazers)
 
 
 ## Démarrage rapide (manuel — recommandé)
