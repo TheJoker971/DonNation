@@ -4,9 +4,9 @@ Plateforme de dons associatifs — NestJS, Next.js, Stripe Connect, reçus NFT o
 
 ## OpenSSF Scorecard
 
-[![Build](https://github.com/TheJoker971/DonNation/actions/workflows/main.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/main.yml)
+[![Build](https://github.com/TheJoker971/DonNation/actions/workflows/ci.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/ci.yml)
 
-[![CodeQL](https://github.com/TheJoker971/DonNation/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/codeql-analysis.yml)
+[![OpenSSF Scorecard](https://github.com/TheJoker971/DonNation/actions/workflows/scorecard.yml/badge.svg)](https://github.com/TheJoker971/DonNation/actions/workflows/scorecard.yml)
 
 [![License](https://img.shields.io/github/license/TheJoker971/DonNation)](LICENSE)
 
