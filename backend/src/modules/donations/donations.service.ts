@@ -187,11 +187,6 @@ export class DonationsService {
       throw new NotFoundException('Donation not found');
     }
 
-    // BACKEND_URL prioritaire (URL publique du backend), sinon on dérive du port
-    const port = this.config.get<string>('PORT', '3000');
-    const backendUrl =
-      this.config.get<string>('BACKEND_URL') ??
-      `http://localhost:${port}`;
     const amountEur = (donation.amountEur / 100).toFixed(2);
     const date = donation.createdAt.toLocaleDateString('fr-FR', {
       day: 'numeric',
