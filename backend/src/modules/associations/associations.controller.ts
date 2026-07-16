@@ -103,7 +103,7 @@ export class AssociationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ASSOCIATION)
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'photos', maxCount: 6 }], {
+    FileFieldsInterceptor([{ name: 'photos', maxCount: 10 }], {
       limits: { fileSize: 5 * 1024 * 1024 },
     }),
   )

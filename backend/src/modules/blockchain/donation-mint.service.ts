@@ -67,6 +67,14 @@ export class DonationMintService {
       return;
     }
 
+    // Allow retry after a previous mint failure
+    if (donation.invoice.status === InvoiceStatus.FAILED) {
+      await this.prisma.invoice.update({
+        where: { id: donation.invoice.id },
+        data: { status: InvoiceStatus.PENDING },
+      });
+    }
+
     const mintTo = this.resolveMintRecipient(donation.donor.walletAddress);
     if (!mintTo) {
       this.logger.warn(
@@ -99,6 +107,12 @@ export class DonationMintService {
         stripePaymentIntentId: donation.stripePaymentIntentId,
       });
 
+      const port = this.config.get<string>('PORT', '3000');
+      const backendUrl =
+        this.config.get<string>('BACKEND_URL') ??
+        `http://localhost:${port}`;
+      const metadataUrl = `${backendUrl}/api/v1/donations/${donationId}/nft-metadata`;
+
       const { txHash, tokenId } = await this.blockchain.mintInvoice({
         associationId: donation.associationId,
         to: mintTo,
@@ -106,6 +120,7 @@ export class DonationMintService {
         pointsEarned: donation.pointsEarned,
         externalPaymentIdHash: donation.invoice.externalPaymentIdHash,
         receiptHash,
+        tokenUri: metadataUrl,
       });
 
       await this.prisma.$transaction(async (tx) => {
@@ -116,6 +131,7 @@ export class DonationMintService {
             tokenId,
             txHash,
             chainId: this.blockchain.getChainId(),
+            metadataUrl,
             status: InvoiceStatus.MINTED,
           },
         });

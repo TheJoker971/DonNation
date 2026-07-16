@@ -8,16 +8,18 @@ import {
   DonationStatus,
   InvoiceStatus,
 } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDonationDto } from './dto/create-donation.dto';
 import { StripeService } from '../payments/stripe.service';
-import { getDonorLevel } from './utils/donor-level.util';
+import { getDonorLevel, getDonorLevelLabel } from './utils/donor-level.util';
 
 @Injectable()
 export class DonationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripeService: StripeService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(donorId: string, dto: CreateDonationDto) {
@@ -160,6 +162,84 @@ export class DonationsService {
       ...this.toPublicDonation(donation),
       association: donation.association,
       invoice: donation.invoice ? this.toPublicInvoice(donation.invoice) : null,
+    };
+  }
+
+  async getNftMetadata(donationId: string): Promise<Record<string, unknown>> {
+    const donation = await this.prisma.donation.findUnique({
+      where: { id: donationId },
+      include: {
+        association: { select: { name: true, slug: true } },
+        invoice: {
+          select: {
+            tokenId: true,
+            txHash: true,
+            chainId: true,
+            pdfUrl: true,
+            receiptHash: true,
+          },
+        },
+        donor: { select: { displayName: true } },
+      },
+    });
+
+    if (!donation) {
+      throw new NotFoundException('Donation not found');
+    }
+
+    // BACKEND_URL prioritaire (URL publique du backend), sinon on dérive du port
+    const port = this.config.get<string>('PORT', '3000');
+    const backendUrl =
+      this.config.get<string>('BACKEND_URL') ??
+      `http://localhost:${port}`;
+    const amountEur = (donation.amountEur / 100).toFixed(2);
+    const date = donation.createdAt.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    const level = getDonorLevelLabel(getDonorLevel(donation.pointsEarned));
+    const tokenId = donation.invoice?.tokenId;
+    const txHash = donation.invoice?.txHash;
+    const chainId = donation.invoice?.chainId ?? 84532;
+
+    const explorerBase =
+      chainId === 84532
+        ? 'https://sepolia.basescan.org'
+        : 'https://basescan.org';
+
+    const attributes: Array<{ trait_type: string; value: string | number }> = [
+      { trait_type: 'Association', value: donation.association.name },
+      { trait_type: 'Montant', value: `${amountEur} EUR` },
+      { trait_type: 'Date', value: date },
+      { trait_type: 'Points gagnés', value: donation.pointsEarned },
+      { trait_type: 'Niveau donateur', value: level },
+      { trait_type: 'Statut', value: donation.status },
+    ];
+
+    if (tokenId !== null && tokenId !== undefined) {
+      attributes.push({ trait_type: 'Token ID', value: tokenId });
+    }
+    if (txHash) {
+      attributes.push({
+        trait_type: 'Transaction',
+        value: `${explorerBase}/tx/${txHash}`,
+      });
+    }
+
+    const appUrl = this.config.get<string>('APP_URL', '');
+
+    return {
+      name: `DonNation – Reçu #${tokenId ?? donationId.slice(0, 8)}`,
+      description: `Don de ${amountEur} € à ${donation.association.name}, le ${date}. Niveau donateur : ${level}.`,
+      image: appUrl ? `${appUrl}/nft-image.png` : '',
+      external_url: appUrl
+        ? `${appUrl}/donations/${donationId}/receipt`
+        : '',
+      ...(donation.invoice?.pdfUrl && {
+        animation_url: donation.invoice.pdfUrl,
+      }),
+      attributes,
     };
   }
 

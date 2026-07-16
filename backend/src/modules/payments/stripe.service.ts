@@ -24,12 +24,6 @@ type StripeConnectAccount = StripeWebhookEvent['data']['object'] & {
   capabilities?: { crypto_payments?: string };
 };
 
-type ConnectCapabilities = {
-  card_payments: { requested: boolean };
-  transfers: { requested: boolean };
-  crypto_payments?: { requested: boolean };
-};
-
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
@@ -65,20 +59,18 @@ export class StripeService {
   ): Promise<string> {
     const stripe = this.requireStripe();
 
-    const capabilities: ConnectCapabilities = {
-      card_payments: { requested: true },
-      transfers: { requested: true },
-    };
-
-    if (this.isCryptoPaymentsEnabled()) {
-      capabilities.crypto_payments = { requested: true };
-    }
-
+    // card_payments + transfers only.
+    // Stripe does NOT allow requesting crypto_payments for Express accounts in FR
+    // (error: "The crypto_payments capability is not requestable for accounts in FR").
+    // Requesting it at creation time fails the whole Connect onboarding.
     const account = await stripe.accounts.create({
       type: 'express',
       country: 'FR',
       email,
-      capabilities,
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
       metadata: { associationId },
     });
 
@@ -88,6 +80,8 @@ export class StripeService {
   async requestCryptoPaymentsCapability(
     stripeAccountId: string,
   ): Promise<boolean> {
+    // Crypto payments are not available for FR Connect accounts.
+    // Keep this as a no-op best-effort for future non-FR support.
     if (!this.isCryptoPaymentsEnabled()) {
       return false;
     }
@@ -103,7 +97,7 @@ export class StripeService {
       return capability.status === 'active';
     } catch (error) {
       this.logger.warn(
-        `Could not request crypto_payments for account ${stripeAccountId}`,
+        `Could not request crypto_payments for account ${stripeAccountId} (often unavailable for FR)`,
         error instanceof Error ? error.message : error,
       );
       return false;
@@ -327,17 +321,56 @@ export class StripeService {
       return;
     }
 
+    await this.applyConnectAccountStatus(account.id, associationId, account);
+  }
+
+  /**
+   * Sync Stripe Connect status from Stripe API into the DB.
+   * Needed in local/dev when webhooks are not forwarded (Stripe CLI).
+   */
+  async syncConnectAccountStatus(
+    stripeAccountId: string,
+    associationId: string,
+  ): Promise<{
+    stripeOnboardingComplete: boolean;
+    stripeCryptoPaymentsActive: boolean;
+  }> {
+    const stripe = this.requireStripe();
+    const account = (await stripe.accounts.retrieve(
+      stripeAccountId,
+    )) as StripeConnectAccount;
+
+    return this.applyConnectAccountStatus(
+      stripeAccountId,
+      associationId,
+      account,
+    );
+  }
+
+  private async applyConnectAccountStatus(
+    stripeAccountId: string,
+    associationId: string,
+    account: StripeConnectAccount,
+  ): Promise<{
+    stripeOnboardingComplete: boolean;
+    stripeCryptoPaymentsActive: boolean;
+  }> {
     const onboardingComplete = Boolean(
       account.charges_enabled && account.details_submitted,
     );
     const cryptoActive = account.capabilities?.crypto_payments === 'active';
 
     await this.prisma.association.updateMany({
-      where: { id: associationId, stripeConnectAccountId: account.id },
+      where: { id: associationId, stripeConnectAccountId: stripeAccountId },
       data: {
         stripeOnboardingComplete: onboardingComplete,
         stripeCryptoPaymentsActive: cryptoActive,
       },
     });
+
+    return {
+      stripeOnboardingComplete: onboardingComplete,
+      stripeCryptoPaymentsActive: cryptoActive,
+    };
   }
 }
