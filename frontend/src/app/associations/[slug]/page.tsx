@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import type { AssociationProfile } from '@/lib/types';
@@ -73,12 +72,11 @@ function PhotoCarousel({ photos }: { photos: { url: string; caption?: string | n
           key={photo.url}
           className={`absolute inset-0 transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0'}`}
         >
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={photo.url}
             alt={photo.caption ?? `Photo ${i + 1}`}
-            fill
-            className="object-cover"
-            priority={i === 0}
+            className="absolute inset-0 h-full w-full object-cover"
           />
           {photo.caption && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-6 py-4">
@@ -166,12 +164,11 @@ export default function AssociationProfilePage() {
       <section className="relative overflow-hidden rounded-3xl">
         {hasCoverPhoto ? (
           <div className="relative" style={{ aspectRatio: '21/9' }}>
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={photos[0].url}
               alt={`Couverture ${association.name}`}
-              fill
-              className="object-cover"
-              priority
+              className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/30 to-transparent" />
           </div>
@@ -184,7 +181,12 @@ export default function AssociationProfilePage() {
             <div className="flex items-end gap-5">
               {association.logoUrl ? (
                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-white shadow-xl md:h-24 md:w-24">
-                  <Image src={association.logoUrl} alt={association.name} fill className="object-cover" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={association.logoUrl}
+                    alt={association.name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
                 </div>
               ) : (
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-4 border-white bg-white text-3xl font-bold text-brand-700 shadow-xl md:h-24 md:w-24">
@@ -317,7 +319,12 @@ export default function AssociationProfilePage() {
                 <div className="mt-4 grid grid-cols-5 gap-2">
                   {photos.slice(0, 5).map((photo, i) => (
                     <div key={photo.url} className="relative aspect-square overflow-hidden rounded-xl">
-                      <Image src={photo.url} alt={photo.caption ?? `Photo ${i + 1}`} fill className="object-cover" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photo.url}
+                        alt={photo.caption ?? `Photo ${i + 1}`}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
                     </div>
                   ))}
                 </div>

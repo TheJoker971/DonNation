@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { api, apiUpload } from '@/lib/api';
 import type { Association, AssociationPhoto } from '@/lib/types';
 import { AuthGuard } from '@/components/AuthGuard';
@@ -210,6 +209,13 @@ export default function AssociationDashboardPage() {
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <h2 className="text-xl font-semibold text-slate-900">Logo</h2>
                   <p className="mt-1 text-sm text-slate-500">JPG, PNG ou WebP — max 2 Mo.</p>
+                  {association.logoUrl && (
+                    <img
+                      src={association.logoUrl}
+                      alt={`Logo ${association.name}`}
+                      className="mt-3 h-20 w-20 rounded-2xl object-cover border border-slate-200"
+                    />
+                  )}
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -242,11 +248,11 @@ export default function AssociationDashboardPage() {
                     <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
                       {photos.map((photo) => (
                         <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-2xl bg-slate-100">
-                          <Image
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
                             src={photo.url}
                             alt={photo.caption ?? 'Photo'}
-                            fill
-                            className="object-cover"
+                            className="h-full w-full object-cover"
                           />
                           {photo.caption && (
                             <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-2 py-1">

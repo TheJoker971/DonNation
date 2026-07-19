@@ -18,6 +18,12 @@ RUN npx prisma generate
 # Build the app
 RUN npm run build
 
+# Compile seed.ts to plain JS so the runner can execute it without ts-node
+RUN node_modules/.bin/tsc prisma/seed.ts \
+    --esModuleInterop --resolveJsonModule \
+    --module commonjs --target ES2019 \
+    --skipLibCheck --outDir dist-seed
+
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -26,8 +32,9 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copy built artifacts and prisma schema if present
+# Copy built artifacts and prisma schema
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist-seed ./dist-seed
 COPY --from=builder /app/prisma ./prisma
 
 # Copy generated Prisma client from builder so runtime has the client

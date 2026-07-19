@@ -17,6 +17,14 @@ export function CheckoutForm({ clientSecret, donationId, cryptoAvailable = false
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.includes('placeholder')) {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        Clé Stripe publishable manquante. Définis <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> et rebuild le frontend.
+      </div>
+    );
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);

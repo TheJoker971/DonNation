@@ -1,9 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DonationStatus, InvoiceStatus } from '@prisma/client';
 import { createWriteStream, mkdirSync } from 'fs';
 import { join } from 'path';
 import PDFDocument from 'pdfkit';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DonationMintService } from '../blockchain/donation-mint.service';
 
 type ReceiptDonation = {
   id: string;
@@ -43,10 +45,11 @@ export class ReceiptService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly donationMintService: DonationMintService,
   ) {}
 
   async ensureReceipt(donationId: string): Promise<string | null> {
-    const donation = await this.prisma.donation.findUnique({
+    let donation = await this.prisma.donation.findUnique({
       where: { id: donationId },
       include: {
         invoice: true,
@@ -59,11 +62,30 @@ export class ReceiptService {
       return null;
     }
 
-    // Always regenerate to pick up the latest design
-    // (remove the early-return cache check so new receipts use the updated template)
-
     if (donation.status === 'PENDING' || donation.status === 'CANCELLED') {
       return null;
+    }
+
+    // Retry mint if payment succeeded but blockchain step failed earlier
+    if (
+      donation.status === DonationStatus.PAID &&
+      donation.invoice.status === InvoiceStatus.FAILED
+    ) {
+      this.logger.log(`Retrying blockchain mint for donation ${donationId}`);
+      await this.donationMintService.mintPaidDonation(donationId);
+
+      donation = await this.prisma.donation.findUnique({
+        where: { id: donationId },
+        include: {
+          invoice: true,
+          association: true,
+          donor: { select: { email: true, displayName: true } },
+        },
+      });
+
+      if (!donation?.invoice) {
+        return null;
+      }
     }
 
     const pdfUrl = await this.generatePdf({
@@ -205,17 +227,19 @@ export class ReceiptService {
         lineBreak: false,
       });
 
-    // Blockchain badge top-right
-    doc.rect(W - 138, 22, 98, 16).fill(this.green);
-    doc
-      .fillColor('#ffffff')
-      .fontSize(7.5)
-      .font('Helvetica-Bold')
-      .text('CERTIFIÉ BLOCKCHAIN', W - 136, 26, {
-        width: 94,
-        align: 'center',
-        lineBreak: false,
-      });
+    // Blockchain badge — uniquement si le NFT a bien été émis
+    if (donation.invoice.status === InvoiceStatus.MINTED) {
+      doc.rect(W - 138, 22, 98, 16).fill(this.green);
+      doc
+        .fillColor('#ffffff')
+        .fontSize(7.5)
+        .font('Helvetica-Bold')
+        .text('CERTIFIÉ BLOCKCHAIN', W - 136, 26, {
+          width: 94,
+          align: 'center',
+          lineBreak: false,
+        });
+    }
   }
 
   // ─── Amount hero ──────────────────────────────────────────────────────────────
@@ -379,7 +403,9 @@ export class ReceiptService {
       .fontSize(9)
       .font('Helvetica')
       .text(
-        'Ces données sont enregistrées de façon permanente et infalsifiable sur la blockchain.',
+        donation.invoice.status === InvoiceStatus.MINTED
+          ? 'Ces données sont enregistrées de façon permanente et infalsifiable sur la blockchain.'
+          : 'La certification blockchain sera finalisée automatiquement. Re-téléchargez ce reçu dans quelques instants.',
         pad,
         top + 44,
         { width: W - pad * 2, lineBreak: false },

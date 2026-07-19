@@ -1,4 +1,4 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Allow passing build-time public envs (NEXT_PUBLIC_*) so Next can prerender during build
@@ -11,7 +11,7 @@ ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
 COPY package*.json ./
 
 # Install all deps (including dev) so build has tailwind/postcss etc.
-RUN npm ci
+RUN npm install --frozen-lockfile=false
 
 # Copy sources
 COPY . .
@@ -22,13 +22,13 @@ ENV NODE_ENV=production
 # Build
 RUN npm run build
 
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
 # Install only production deps in final image
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev --frozen-lockfile=false
 
 # Copy build output and public assets
 COPY --from=builder /app/.next ./.next

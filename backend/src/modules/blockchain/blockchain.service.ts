@@ -79,11 +79,20 @@ export class BlockchainService {
     return config;
   }
 
+  private async txOverrides(): Promise<{ nonce: number }> {
+    const wallet = this.wallet;
+    if (!wallet) {
+      throw new Error('Blockchain wallet is not configured');
+    }
+    const nonce = await wallet.getNonce('pending');
+    return { nonce };
+  }
+
   async registerAssociation(associationId: string): Promise<string> {
     const protocol = this.requireProtocol();
     const bytes32Id = associationUuidToBytes32(associationId);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const tx = await protocol.registerAssociation(bytes32Id);
+    const tx = await protocol.registerAssociation(bytes32Id, await this.txOverrides());
 
     const receipt = await (tx as { wait: () => Promise<TxReceipt> }).wait();
     this.logger.log(
@@ -101,7 +110,7 @@ export class BlockchainService {
 
     if (!config.registered) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const tx = await protocol.registerAssociation(bytes32Id);
+      const tx = await protocol.registerAssociation(bytes32Id, await this.txOverrides());
 
       await (tx as { wait: () => Promise<unknown> }).wait();
       this.logger.log(`Association ${associationId} registered on-chain`);
@@ -110,7 +119,7 @@ export class BlockchainService {
 
     if (!config.active) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const tx = await protocol.setAssociationActive(bytes32Id);
+      const tx = await protocol.setAssociationActive(bytes32Id, await this.txOverrides());
 
       await (tx as { wait: () => Promise<unknown> }).wait();
       this.logger.log(`Association ${associationId} activated on-chain`);
@@ -140,6 +149,7 @@ export class BlockchainService {
     pointsEarned: number;
     externalPaymentIdHash: string;
     receiptHash: string;
+    tokenUri?: string;
   }): Promise<{ txHash: string; tokenId: number }> {
     const protocol = this.requireProtocol();
     const bytes32AssociationId = associationUuidToBytes32(params.associationId);
@@ -152,7 +162,8 @@ export class BlockchainService {
       params.pointsEarned,
       params.externalPaymentIdHash,
       params.receiptHash,
-      '',
+      params.tokenUri ?? '',
+      await this.txOverrides(),
     );
 
     const receipt = await (tx as { wait: () => Promise<TxReceipt> }).wait();
