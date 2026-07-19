@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DonNation – Présentation</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --g: #059669;
+      --g2: #047857;
+      --b: #0EA5E9;
+      --dark: #0a0f0a;
+      --dark2: #111811;
+      --white: #ffffff;
+      --muted: rgba(255,255,255,0.5);
+    }
+
+    /* ── Reset Reveal ───────────────────────── */
+    .reveal-viewport { background: var(--dark); }
+    .reveal { font-family: 'Inter', sans-serif; color: var(--white); }
+    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+      font-family: 'Inter', sans-serif;
+      text-transform: none;
+      letter-spacing: -0.03em;
+      color: var(--white);
+      margin: 0;
+    }
+    .reveal section {
+      padding: 0 !important;
+      height: 100%;
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+      text-align: left;
+    }
+    .reveal .progress span { background: var(--g); }
+    .reveal .controls { color: var(--g); }
+    .reveal .slide-number { color: rgba(255,255,255,0.3); font-size:0.4em; background: transparent; }
+
+    /* ── Layout helpers ─────────────────────── */
+    .full { width:100%; height:100%; padding: 64px 72px; box-sizing: border-box; display:flex; flex-direction:column; justify-content:center; }
+    .split { display:grid; grid-template-columns:1fr 1fr; gap:0; height:100%; }
+    .split-left  { padding:64px 56px 64px 72px; display:flex; flex-direction:column; justify-content:center; }
+    .split-right { display:flex; align-items:center; justify-content:center; padding:48px; }
+
+    /* ── Typography ─────────────────────────── */
+    .eyebrow {
+      font-size: 0.5rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--g);
+      margin-bottom: 20px;
+    }
+    .big { font-size: 3.8rem; font-weight: 900; line-height: 1.0; }
+    .medium { font-size: 2.4rem; font-weight: 800; line-height: 1.15; }
+    .sub { font-size: 1rem; font-weight: 400; color: var(--muted); line-height: 1.7; margin-top: 20px; max-width: 480px; }
+    .grad { background: linear-gradient(135deg, var(--g) 0%, var(--b) 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+    /* ── Pill / chip ────────────────────────── */
+    .pill {
+      display:inline-flex; align-items:center; gap:6px;
+      border: 1px solid rgba(5,150,105,0.4);
+      background: rgba(5,150,105,0.1);
+      color: #4ade80;
+      font-size: 0.42rem; font-weight: 600;
+      padding: 6px 14px; border-radius: 999px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .pill-blue { border-color:rgba(14,165,233,0.4); background:rgba(14,165,233,0.1); color:#38bdf8; }
+    .pill-white { border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.7); }
+
+    /* ── Cards ──────────────────────────────── */
+    .card-dark {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 28px 32px;
+      backdrop-filter: blur(8px);
+    }
+    .card-green {
+      background: linear-gradient(135deg, rgba(5,150,105,0.15) 0%, rgba(14,165,233,0.08) 100%);
+      border: 1px solid rgba(5,150,105,0.25);
+      border-radius: 20px;
+      padding: 28px 32px;
+    }
+
+    /* ── Grid ───────────────────────────────── */
+    .g2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+
+    /* ── Stat block ─────────────────────────── */
+    .stat-num { font-size: 2.8rem; font-weight: 900; line-height: 1; }
+    .stat-label { font-size: 0.55rem; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+    /* ── Feature row ────────────────────────── */
+    .feat {
+      display:flex; align-items:flex-start; gap:18px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .feat:last-child { border-bottom:none; }
+    .feat-icon {
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size: 1rem;
+      background: rgba(5,150,105,0.12);
+    }
+    .feat-title { font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; }
+    .feat-desc  { font-size: 0.52rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── Step / timeline ────────────────────── */
+    .step {
+      display:flex; align-items:flex-start; gap:20px;
+    }
+    .step-num {
+      width:44px; height:44px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:0.65rem; font-weight:800;
+      background: linear-gradient(135deg, var(--g), var(--b));
+    }
+    .step-body { padding-top:10px; }
+    .step-title { font-size:0.68rem; font-weight:700; margin-bottom:4px; }
+    .step-desc  { font-size:0.52rem; color:var(--muted); line-height:1.6; }
+
+    /* ── Stack pill row ─────────────────────── */
+    .stack-row {
+      display:flex; align-items:center; gap:12px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .stack-row:last-child { border-bottom:none; }
+    .stack-icon { font-size:1.2rem; width:32px; text-align:center; flex-shrink:0; }
+    .stack-name { font-size:0.6rem; font-weight:700; flex:1; }
+    .stack-tags { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+
+    /* ── CI check row ───────────────────────── */
+    .ci-check {
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 0.58rem;
+    }
+    .ci-check:last-child { border-bottom:none; }
+    .dot { width:8px; height:8px; border-radius:50%; background:var(--g); margin-right:10px; display:inline-block; box-shadow:0 0 8px var(--g); }
+
+    /* ── Visual blob ────────────────────────── */
+    .blob {
+      width: 340px; height: 340px; border-radius: 40% 60% 55% 45% / 50% 45% 55% 50%;
+      background: linear-gradient(135deg, rgba(5,150,105,0.25) 0%, rgba(14,165,233,0.15) 100%);
+      display:flex; align-items:center; justify-content:center;
+      font-size: 6rem;
+      animation: morph 8s ease-in-out infinite;
+    }
+    @keyframes morph {
+      0%,100% { border-radius: 40% 60% 55% 45% / 50% 45% 55% 50%; }
+      33%      { border-radius: 55% 45% 40% 60% / 45% 55% 50% 50%; }
+      66%      { border-radius: 45% 55% 60% 40% / 55% 45% 45% 55%; }
+    }
+
+    /* ── Glow lines (slide 1 deco) ──────────── */
+    .glow-ring {
+      position:absolute; border-radius:50%;
+      border: 1px solid rgba(5,150,105,0.2);
+      pointer-events:none;
+    }
+
+    /* ── Slide backgrounds ──────────────────── */
+    .bg-dark  { background: var(--dark); }
+    .bg-dark2 { background: #0d130d; }
+    .bg-split-left  { background: #0d130d; }
+    .bg-split-right { background: rgba(5,150,105,0.04); }
+
+    /* ── Road pill ──────────────────────────── */
+    .road-item {
+      flex:1;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px;
+      text-align:center;
+    }
+    .road-item.active {
+      background: rgba(5,150,105,0.12);
+      border-color: rgba(5,150,105,0.3);
+    }
+    .road-icon { font-size:1.6rem; margin-bottom:10px; }
+    .road-title { font-size:0.6rem; font-weight:700; margin-bottom:6px; }
+    .road-desc  { font-size:0.48rem; color:var(--muted); line-height:1.6; }
+
+    /* ── Connector arrow ────────────────────── */
+    .connector { display:flex; align-items:center; color:var(--muted); font-size:0.8rem; padding:0 4px; }
+
+    /* ── Fragments ──────────────────────────── */
+    .reveal .fragment { transition: opacity 0.35s ease, transform 0.35s ease; }
+    .reveal .fragment.fade-up { transform: translateY(18px); }
+    .reveal .fragment.fade-up.visible { transform: translateY(0); }
+
+    /* ══════════════════════════════════════════════
+       PRINT / PDF  —  thème clair, propre, A4 paysage
+    ══════════════════════════════════════════════ */
+    @media print {
+      /* Page setup */
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      /* ── Kill Reveal chrome ───────────────── */
+      .reveal .controls,
+      .reveal .progress,
+      .reveal .slide-number,
+      .reveal .speaker-notes { display: none !important; }
+
+      /* ── Reset container ─────────────────── */
+      html, body { background: #fff !important; margin: 0; padding: 0; }
+      .reveal-viewport, .reveal { background: #fff !important; width: 100% !important; height: auto !important; }
+      .reveal .slides { position: static !important; transform: none !important; width: 100% !important; }
+
+      /* ── Each slide = 1 page ─────────────── */
+      .reveal section {
+        display: block !important;
+        position: relative !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        min-height: 210mm !important;
+        max-height: 210mm !important;
+        overflow: hidden !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        background: #ffffff !important;
+        /* Reset dark bg */
+        background-color: #ffffff !important;
+      }
+
+      /* ── Show all fragments ──────────────── */
+      .reveal .fragment { opacity: 1 !important; visibility: visible !important; transform: none !important; }
+
+      /* ── Colour overrides (dark→light) ───── */
+      :root {
+        --g: #059669;
+        --b: #0EA5E9;
+        --dark: #ffffff;
+        --white: #111827;
+        --muted: #6B7280;
+      }
+
+      /* text colors */
+      .reveal, .reveal h1, .reveal h2, .reveal h3, .reveal h4,
+      .feat-title, .step-title, .road-title, .stack-name,
+      .feat, .step, .road-item, .arch-label, .ci-check { color: #111827 !important; }
+
+      .feat-desc, .step-desc, .road-desc, .stat-label,
+      .sub, .stack-row .stack-name { color: #6B7280 !important; }
+
+      /* muted text inside inline styles */
+      [style*="color:var(--muted)"], [style*="color: var(--muted)"] { color: #6B7280 !important; }
+      [style*="color:var(--white)"], [style*="color: var(--white)"] { color: #111827 !important; }
+      [style*="color:rgba(255,255,255"] { color: #374151 !important; }
+
+      /* ── Layout helpers ──────────────────── */
+      .full {
+        width: 297mm !important;
+        height: 210mm !important;
+        padding: 28mm 22mm !important;
+        box-sizing: border-box !important;
+        display: block !important;
+      }
+
+      .split {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        width: 297mm !important;
+        height: 210mm !important;
+      }
+      .split-left  { padding: 20mm 14mm 20mm 18mm !important; display: block !important; }
+      .split-right { padding: 16mm 18mm !important; display: block !important; background: #F9FAFB !important; }
+
+      /* ── Cards ───────────────────────────── */
+      .card-dark, .card-green {
+        background: #F9FAFB !important;
+        border: 1px solid #E5E7EB !important;
+        color: #111827 !important;
+      }
+
+      /* ── Badges / pills ──────────────────── */
+      .eyebrow { color: var(--g) !important; }
+
+      .pill       { background: rgba(5,150,105,0.08) !important; border-color: rgba(5,150,105,0.25) !important; color: #065F46 !important; }
+      .pill-blue  { background: rgba(14,165,233,0.08) !important; border-color: rgba(14,165,233,0.25) !important; color: #075985 !important; }
+      .pill-white { background: #F3F4F6 !important; border-color: #D1D5DB !important; color: #374151 !important; }
+
+      /* ── Step numbers ────────────────────── */
+      .step-num { color: #fff !important; }
+
+      /* ── Dot CI ──────────────────────────── */
+      .dot { background: var(--g) !important; box-shadow: none !important; }
+
+      /* ── Stack rows ──────────────────────── */
+      .stack-row { border-bottom-color: #E5E7EB !important; }
+
+      /* ── Feat rows ───────────────────────── */
+      .feat { border-bottom-color: #E5E7EB !important; }
+      .feat-icon { background: rgba(5,150,105,0.08) !important; }
+
+      /* ── Road items ──────────────────────── */
+      .road-item { background: #F9FAFB !important; border-color: #E5E7EB !important; }
+      .road-item.active { background: rgba(5,150,105,0.07) !important; border-color: rgba(5,150,105,0.3) !important; }
+
+      /* ── CI checks ───────────────────────── */
+      .ci-check { border-bottom-color: #E5E7EB !important; color: #111827 !important; }
+
+      /* ── Connector ───────────────────────── */
+      .connector { color: #9CA3AF !important; }
+
+      /* ── Stat numbers ────────────────────── */
+      .stat-num.grad, .grad { color: var(--g) !important; background: none !important; -webkit-background-clip: unset !important; }
+
+      /* ── Font size adjustments for A4 ─────── */
+      .big    { font-size: 38pt !important; }
+      .medium { font-size: 24pt !important; }
+      .sub    { font-size: 9pt !important; }
+      .eyebrow { font-size: 7pt !important; }
+      .feat-title, .step-title, .stack-name, .road-title { font-size: 9pt !important; }
+      .feat-desc, .step-desc, .road-desc, .stat-label { font-size: 7.5pt !important; }
+      .stat-num { font-size: 28pt !important; }
+      .pill, .pill-blue, .pill-white { font-size: 6pt !important; }
+      .ci-check { font-size: 8pt !important; }
+
+      /* ── Slide 1 deco rings ──────────────── */
+      .glow-ring { display: none !important; }
+
+      /* ── Logo ring ───────────────────────── */
+      [style*="background:linear-gradient(135deg,var(--g)"] { box-shadow: none !important; }
+
+      /* ── Dark inline backgrounds ─────────── */
+      [style*="background:#0a100a"],
+      [style*="background: #0a100a"] { background: #F9FAFB !important; }
+
+      /* Row dividers inside cards */
+      [style*="border-bottom:1px solid rgba(255,255,255"] { border-bottom-color: #E5E7EB !important; }
+
+      /* Inline rgba text */
+      [style*="color:rgba(255,255,255,0.8)"],
+      [style*="color:rgba(255,255,255,0.85)"],
+      [style*="color:rgba(255,255,255,0.9)"],
+      [style*="color:rgba(255,255,255,0.75)"] { color: #374151 !important; }
+
+      /* ── Separator line on conclusion ─────── */
+      [style*="background:rgba(255,255,255,0.12)"] { background: #E5E7EB !important; }
+
+      /* ── Radial glow bg (slide 10) ───────── */
+      [style*="background:radial-gradient"] { background: transparent !important; }
+
+      /* ── Slide 1 bg ──────────────────────── */
+      [data-background-color="#080d08"] { background: #ffffff !important; }
+
+      /* Number slides */
+      .slide-num-print {
+        position: absolute;
+        bottom: 8mm;
+        right: 10mm;
+        font-size: 7pt;
+        color: #D1D5DB;
+        font-family: 'Inter', sans-serif;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ══════════════════════════════════════════════
+  01 · TITRE
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="full" style="position:relative; overflow:hidden;">
+
+    <!-- Deco rings -->
+    <div class="glow-ring" style="width:500px;height:500px;right:-160px;top:-160px;"></div>
+    <div class="glow-ring" style="width:300px;height:300px;right:-60px;top:-60px; border-color:rgba(14,165,233,0.15);"></div>
+
+    <!-- Eyebrow -->
+    <div style="margin-bottom:32px;">
+      <span class="pill">Projet académique · 2025 – 2026</span>
+    </div>
+
+    <!-- Logo + titre -->
+    <div style="display:flex; align-items:center; gap:20px; margin-bottom:16px;">
+      <div style="width:72px;height:72px;background:linear-gradient(135deg,var(--g),var(--b));border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 12px 40px rgba(5,150,105,0.35);">🌱</div>
+      <h1 class="big grad">DonNation</h1>
+    </div>
+
+    <p style="font-size:1.15rem; font-weight:400; color:var(--muted); max-width:580px; line-height:1.7; margin-bottom:48px;">
+      La plateforme qui rend les dons aux associations
+      <span style="color:rgba(255,255,255,0.85); font-weight:600;">transparents, traçables et récompensés</span>
+      grâce à la blockchain.
+    </p>
+
+    <!-- Membres -->
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:40px;">
+      <span class="pill-white pill">👤 Aymen Bentalha</span>
+      <span class="pill-white pill">👤 Membre 2</span>
+      <span class="pill-white pill">👤 Membre 3</span>
+    </div>
+
+    <!-- Stack pills -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <span class="pill">NestJS</span>
+      <span class="pill-blue pill">Next.js</span>
+      <span class="pill-white pill">Solidity</span>
+      <span class="pill-white pill">PostgreSQL</span>
+      <span class="pill-white pill">Stripe</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  02 · LE PROBLÈME
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="split">
+    <div class="split-left">
+      <div class="eyebrow">01 · Le problème</div>
+      <h2 class="medium">Les associations méritent mieux<br/>que des <span class="grad">tableurs Excel</span></h2>
+      <p class="sub">Aujourd'hui, donner à une association c'est verser de l'argent dans un trou noir. Aucune preuve, aucun suivi, aucune reconnaissance.</p>
+
+      <div style="margin-top:36px; display:flex; flex-direction:column; gap:4px;">
+        <div class="feat fragment fade-up">
+          <div class="feat-icon">😶‍🌫️</div>
+          <div>
+            <div class="feat-title">Zéro transparence</div>
+            <div class="feat-desc">Le donateur ne sait pas où va son argent une fois versé</div>
+          </div>
+        </div>
+        <div class="feat fragment fade-up">
+          <div class="feat-icon" style="background:rgba(245,158,11,0.12);">📄</div>
+          <div>
+            <div class="feat-title">Reçus manuels</div>
+            <div class="feat-desc">Générés à la main, lents, souvent perdus ou erronés</div>
+          </div>
+        </div>
+        <div class="feat fragment fade-up">
+          <div class="feat-icon" style="background:rgba(139,92,246,0.12);">🫥</div>
+          <div>
+            <div class="feat-title">Donateurs oubliés</div>
+            <div class="feat-desc">Aucun système de fidélisation ni de reconnaissance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="split-right" style="background:#0a100a; flex-direction:column; gap:20px;">
+      <div class="card-dark fragment fade-up" style="width:100%;">
+        <div style="font-size:0.5rem; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.1em;">Situation actuelle</div>
+        <div style="font-size:0.62rem; color:rgba(255,255,255,0.8); line-height:1.8;">
+          📧 &nbsp;Email de confirmation… ou pas<br/>
+          🗂 &nbsp;Fichier Excel côté association<br/>
+          📬 &nbsp;Reçu fiscal envoyé… sous 3 semaines<br/>
+          ❓ &nbsp;Aucune traçabilité du don
+        </div>
+      </div>
+      <div class="card-green fragment fade-up" style="width:100%;">
+        <div style="font-size:0.5rem; color:var(--g); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.1em;">Avec DonNation</div>
+        <div style="font-size:0.62rem; color:rgba(255,255,255,0.85); line-height:1.8;">
+          ⛓ &nbsp;Hash blockchain <strong>immédiat</strong><br/>
+          📑 &nbsp;Reçu PDF brandé <strong>automatique</strong><br/>
+          🎖 &nbsp;NFT de don <strong>on-chain</strong><br/>
+          🟢 &nbsp;Traçabilité <strong>totale & publique</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  03 · NOTRE SOLUTION
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="full">
+    <div class="eyebrow">02 · Notre solution</div>
+    <h2 class="medium" style="margin-bottom:8px;">Une plateforme <span class="grad">Web3 complète</span><br/>pour les associations</h2>
+    <p class="sub" style="margin-bottom:40px; margin-top:12px;">Open-source · auto-hébergeable · conçue pour les associations de toute taille</p>
+
+    <div class="g3">
+      <div class="card-dark fragment fade-up" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:2rem;">💸</div>
+        <div style="font-size:0.7rem; font-weight:700;">Dons simplifiés</div>
+        <div style="font-size:0.52rem; color:var(--muted); line-height:1.7;">Stripe (carte) ou crypto — reçu PDF généré instantanément avec preuve blockchain</div>
+      </div>
+      <div class="card-dark fragment fade-up" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:2rem;">🏛️</div>
+        <div style="font-size:0.7rem; font-weight:700;">Dashboard association</div>
+        <div style="font-size:0.52rem; color:var(--muted); line-height:1.7;">Page publique, galerie photos, stats de dons, gestion du profil</div>
+      </div>
+      <div class="card-dark fragment fade-up" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:2rem;">🎖️</div>
+        <div style="font-size:0.7rem; font-weight:700;">NFT & fidélité</div>
+        <div style="font-size:0.52rem; color:var(--muted); line-height:1.7;">Chaque don = NFT on-chain · niveaux Bronze → Silver → Gold</div>
+      </div>
+    </div>
+
+    <!-- Stat bar -->
+    <div style="display:flex; gap:0; margin-top:32px; border:1px solid rgba(255,255,255,0.08); border-radius:20px; overflow:hidden;">
+      <div style="flex:1; padding:24px 28px; border-right:1px solid rgba(255,255,255,0.08);" class="fragment fade-up">
+        <div class="stat-num grad">100%</div>
+        <div class="stat-label">Traçabilité blockchain<br/>sur chaque don</div>
+      </div>
+      <div style="flex:1; padding:24px 28px; border-right:1px solid rgba(255,255,255,0.08);" class="fragment fade-up">
+        <div class="stat-num" style="color:#4ade80;">Auto</div>
+        <div class="stat-label">Reçu PDF généré<br/>sans action manuelle</div>
+      </div>
+      <div style="flex:1; padding:24px 28px;" class="fragment fade-up">
+        <div class="stat-num" style="color:#38bdf8;">NFT</div>
+        <div class="stat-label">Preuve de don<br/>infalsifiable on-chain</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  04 · FONCTIONNALITÉS
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="split">
+    <div class="split-left">
+      <div class="eyebrow">03 · Fonctionnalités</div>
+      <h2 class="medium">Ce qui est <span class="grad">livré</span><br/>aujourd'hui</h2>
+      <p class="sub">MVP complet, déployable en local avec une seule commande Docker.</p>
+
+      <div style="margin-top:32px; display:flex; flex-direction:column; gap:0;">
+        <div class="feat fragment fade-up">
+          <div class="feat-icon">🔐</div>
+          <div><div class="feat-title">Auth complète</div><div class="feat-desc">Email/mdp · Google OAuth · JWT · Reset password</div></div>
+        </div>
+        <div class="feat fragment fade-up">
+          <div class="feat-icon">💳</div>
+          <div><div class="feat-title">Paiement Stripe</div><div class="feat-desc">Webhook, reçu PDF auto, logo association</div></div>
+        </div>
+        <div class="feat fragment fade-up">
+          <div class="feat-icon">⛓️</div>
+          <div><div class="feat-title">Blockchain</div><div class="feat-desc">NFT mint, hash on-chain, MetaMask / WalletConnect</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="split-right" style="background:#0a100a; flex-direction:column; gap:16px; padding:48px 40px;">
+      <div class="feat fragment fade-up" style="background:rgba(255,255,255,0.03); border-radius:16px; padding:16px 20px; border:1px solid rgba(255,255,255,0.06);">
+        <div class="feat-icon" style="background:rgba(14,165,233,0.12);">🏛️</div>
+        <div><div class="feat-title">Dashboard asso</div><div class="feat-desc">Page publique, galerie, stats, preview live</div></div>
+      </div>
+      <div class="feat fragment fade-up" style="background:rgba(255,255,255,0.03); border-radius:16px; padding:16px 20px; border:1px solid rgba(255,255,255,0.06);">
+        <div class="feat-icon" style="background:rgba(139,92,246,0.12);">🎖️</div>
+        <div><div class="feat-title">NFT de don</div><div class="feat-desc">Mint automatique · niveaux Bronze/Silver/Gold</div></div>
+      </div>
+      <div class="feat fragment fade-up" style="background:rgba(255,255,255,0.03); border-radius:16px; padding:16px 20px; border:1px solid rgba(255,255,255,0.06);">
+        <div class="feat-icon" style="background:rgba(245,158,11,0.12);">🖼️</div>
+        <div><div class="feat-title">Galerie événements</div><div class="feat-desc">Upload multi-photos, carousel, aperçu public</div></div>
+      </div>
+      <div class="feat fragment fade-up" style="background:rgba(255,255,255,0.03); border-radius:16px; padding:16px 20px; border:1px solid rgba(255,255,255,0.06);">
+        <div class="feat-icon">🐳</div>
+        <div><div class="feat-title">Docker Compose</div><div class="feat-desc">Env complet en 1 commande — Postgres + Anvil + app</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  05 · ARCHITECTURE
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="full">
+    <div class="eyebrow">04 · Architecture</div>
+    <h2 class="medium" style="margin-bottom:32px;">Stack <span class="grad">technique</span></h2>
+
+    <div class="g2" style="gap:20px;">
+      <div>
+        <div class="stack-row fragment fade-up">
+          <span class="stack-icon">🌐</span>
+          <span class="stack-name">Frontend</span>
+          <div class="stack-tags">
+            <span class="pill-blue pill">Next.js 14</span>
+            <span class="pill-blue pill">TypeScript</span>
+            <span class="pill-blue pill">TailwindCSS</span>
+          </div>
+        </div>
+        <div class="stack-row fragment fade-up">
+          <span class="stack-icon">⚙️</span>
+          <span class="stack-name">Backend</span>
+          <div class="stack-tags">
+            <span class="pill">NestJS</span>
+            <span class="pill">Prisma</span>
+            <span class="pill">PostgreSQL</span>
+          </div>
+        </div>
+        <div class="stack-row fragment fade-up">
+          <span class="stack-icon">⛓️</span>
+          <span class="stack-name">Blockchain</span>
+          <div class="stack-tags">
+            <span class="pill-white pill">Solidity</span>
+            <span class="pill-white pill">Hardhat</span>
+            <span class="pill-white pill">Anvil</span>
+          </div>
+        </div>
+        <div class="stack-row fragment fade-up">
+          <span class="stack-icon">💳</span>
+          <span class="stack-name">Services</span>
+          <div class="stack-tags">
+            <span class="pill-white pill">Stripe</span>
+            <span class="pill-white pill">Resend</span>
+            <span class="pill-white pill">JWT</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flux visuel -->
+      <div class="card-dark fragment fade-up" style="display:flex; flex-direction:column; justify-content:center; gap:0;">
+        <div style="font-size:0.48rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:16px;">Flux d'un don</div>
+
+        <div style="display:flex; flex-direction:column; gap:0;">
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:1rem;">🖱️</span>
+            <span style="font-size:0.55rem; flex:1;">Utilisateur clique "Faire un don"</span>
+            <span class="pill-blue pill" style="font-size:0.38rem;">Next.js</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:1rem;">💳</span>
+            <span style="font-size:0.55rem; flex:1;">Paiement Stripe sécurisé</span>
+            <span class="pill-white pill" style="font-size:0.38rem;">Stripe</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:1rem;">⚙️</span>
+            <span style="font-size:0.55rem; flex:1;">Webhook → enregistrement BDD</span>
+            <span class="pill pill" style="font-size:0.38rem;">NestJS</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:1rem;">⛓️</span>
+            <span style="font-size:0.55rem; flex:1;">Mint NFT + hash on-chain</span>
+            <span class="pill-white pill" style="font-size:0.38rem;">Solidity</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:10px 0;">
+            <span style="font-size:1rem;">📄</span>
+            <span style="font-size:0.55rem; flex:1;">Reçu PDF généré & disponible</span>
+            <span class="pill" style="font-size:0.38rem;">Auto</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  06 · PARCOURS DONATEUR
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="full">
+    <div class="eyebrow">05 · Expérience donateur</div>
+    <h2 class="medium" style="margin-bottom:40px;">Du clic au <span class="grad">reçu blockchain</span><br/>en 4 étapes</h2>
+
+    <div class="g2" style="gap:16px;">
+      <div class="step fragment fade-up">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Découvrir l'association</div>
+          <div class="step-desc">Page publique avec galerie photos, description, compteur de dons et bouton "Faire un don" bien visible</div>
+        </div>
+      </div>
+      <div class="step fragment fade-up">
+        <div class="step-num" style="background:linear-gradient(135deg,var(--b),#6366f1);">2</div>
+        <div class="step-body">
+          <div class="step-title">Choisir & payer</div>
+          <div class="step-desc">Montant libre · Stripe (carte bancaire) ou wallet crypto MetaMask / WalletConnect</div>
+        </div>
+      </div>
+      <div class="step fragment fade-up">
+        <div class="step-num" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">3</div>
+        <div class="step-body">
+          <div class="step-title">Recevoir le reçu PDF</div>
+          <div class="step-desc">PDF brandé aux couleurs de l'association · hash blockchain · adresse contrat · téléchargeable immédiatement</div>
+        </div>
+      </div>
+      <div class="step fragment fade-up">
+        <div class="step-num" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);">4</div>
+        <div class="step-body">
+          <div class="step-title">Gagner un NFT</div>
+          <div class="step-desc">Mint automatique on-chain · progression Bronze → Silver → Gold selon les dons cumulés</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  07 · PARCOURS ASSOCIATION
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="split">
+    <div class="split-left">
+      <div class="eyebrow">06 · Expérience association</div>
+      <h2 class="medium">Un <span class="grad">dashboard</span><br/>tout-en-un</h2>
+      <p class="sub">Tout ce dont une association a besoin pour gérer sa communauté de donateurs, sans compétence technique.</p>
+    </div>
+
+    <div class="split-right" style="background:#0a100a; flex-direction:column; align-items:stretch; padding:40px; gap:0;">
+      <div class="feat fragment fade-up" style="padding:18px 0;">
+        <div class="feat-icon" style="background:rgba(5,150,105,0.12);">🏠</div>
+        <div>
+          <div class="feat-title">Page publique</div>
+          <div class="feat-desc">Profil, description, catégorie, logo · Preview live avant publication</div>
+        </div>
+      </div>
+      <div class="feat fragment fade-up" style="padding:18px 0;">
+        <div class="feat-icon" style="background:rgba(14,165,233,0.12);">🖼️</div>
+        <div>
+          <div class="feat-title">Galerie événements</div>
+          <div class="feat-desc">Upload multi-photos, carousel interactif, aperçu côté donateur</div>
+        </div>
+      </div>
+      <div class="feat fragment fade-up" style="padding:18px 0;">
+        <div class="feat-icon" style="background:rgba(245,158,11,0.12);">📊</div>
+        <div>
+          <div class="feat-title">Suivi des dons</div>
+          <div class="feat-desc">Liste des donateurs, montants, dates, statut — export PDF</div>
+        </div>
+      </div>
+      <div class="feat fragment fade-up" style="padding:18px 0;">
+        <div class="feat-icon" style="background:rgba(139,92,246,0.12);">🔗</div>
+        <div>
+          <div class="feat-title">Wallet intégré</div>
+          <div class="feat-desc">Lier MetaMask ou WalletConnect · Google OAuth custodial pour débuter</div>
+        </div>
+      </div>
+      <div class="feat fragment fade-up" style="padding:18px 0; border-bottom:none;">
+        <div class="feat-icon">📧</div>
+        <div>
+          <div class="feat-title">Reset password</div>
+          <div class="feat-desc">Email Resend sécurisé · token 1h · uniquement pour associations & admins</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  08 · QUALITÉ & CI
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="split">
+    <div class="split-left">
+      <div class="eyebrow">07 · Qualité & CI/CD</div>
+      <h2 class="medium">Pipeline <span class="grad">automatisé</span><br/>du premier push</h2>
+      <p class="sub">Chaque commit déclenche lint, build et tests. La sécurité est auditée en continu par l'OpenSSF Scorecard.</p>
+
+      <div style="margin-top:32px;" class="card-green fragment fade-up">
+        <div style="font-size:0.5rem; color:var(--g); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:10px;">OpenSSF Scorecard</div>
+        <div style="font-size:0.58rem; color:rgba(255,255,255,0.8); line-height:1.8;">
+          Évalue automatiquement :<br/>
+          · Sécurité des dépendances<br/>
+          · Gestion des secrets<br/>
+          · Permissions GitHub Actions<br/>
+          · Politique de branches
+        </div>
+      </div>
+    </div>
+
+    <div class="split-right" style="background:#0a100a; flex-direction:column; align-items:stretch; padding:40px;">
+      <div class="card-dark" style="width:100%;">
+        <div style="font-size:0.5rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:16px;">GitHub Actions · Workflows</div>
+        <div class="ci-check fragment fade-up">
+          <span><span class="dot"></span>Backend — ESLint + tsc + build</span>
+          <span class="pill" style="font-size:0.4rem;">✓ passing</span>
+        </div>
+        <div class="ci-check fragment fade-up">
+          <span><span class="dot"></span>Frontend — ESLint + tsc + Next build</span>
+          <span class="pill" style="font-size:0.4rem;">✓ passing</span>
+        </div>
+        <div class="ci-check fragment fade-up">
+          <span><span class="dot"></span>Smart Contracts — Hardhat compile</span>
+          <span class="pill" style="font-size:0.4rem;">✓ passing</span>
+        </div>
+        <div class="ci-check fragment fade-up">
+          <span><span class="dot"></span>OpenSSF Scorecard — score sécurité</span>
+          <span class="pill" style="font-size:0.4rem;">✓ passing</span>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin-top:16px;">
+        <div class="card-dark fragment fade-up" style="font-size:0.55rem; color:rgba(255,255,255,0.75); line-height:1.7;">
+          🐳 <strong style="color:var(--white);">docker-compose.dev.yml</strong><br/>
+          <code style="color:var(--g); font-size:0.9em;">docker compose up</code> → Postgres + Anvil + backend + frontend
+        </div>
+        <div class="card-dark fragment fade-up" style="font-size:0.55rem; color:rgba(255,255,255,0.75); line-height:1.7;">
+          📖 <strong style="color:var(--white);">Documentation</strong><br/>
+          README · AUTH.md · DOCUMENTATION · .env.example complet
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  09 · PERSPECTIVES
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="full">
+    <div class="eyebrow">08 · Perspectives</div>
+    <h2 class="medium" style="margin-bottom:12px;">La <span class="grad">suite</span> du projet</h2>
+    <p style="font-size:0.65rem; color:var(--muted); margin-bottom:36px;">Ce qu'on ferait avec plus de temps (et un budget prod)</p>
+
+    <div style="display:flex; gap:12px; align-items:center;">
+      <div class="road-item active fragment fade-up">
+        <div class="road-icon">✅</div>
+        <div class="road-title">MVP livré</div>
+        <div class="road-desc">Dons · NFT · Auth · Dashboard · CI/CD · Docker</div>
+      </div>
+      <div class="connector">→</div>
+      <div class="road-item fragment fade-up">
+        <div class="road-icon">☁️</div>
+        <div class="road-title">V2 · Production</div>
+        <div class="road-desc">AWS S3 · Base Mainnet · Dependabot · Tests e2e</div>
+      </div>
+      <div class="connector">→</div>
+      <div class="road-item fragment fade-up">
+        <div class="road-icon">📱</div>
+        <div class="road-title">V3 · Mobile</div>
+        <div class="road-desc">React Native · Scanner QR · Wallet mobile · Notifications</div>
+      </div>
+      <div class="connector">→</div>
+      <div class="road-item fragment fade-up">
+        <div class="road-icon">🎟️</div>
+        <div class="road-title">V4 · Billetterie</div>
+        <div class="road-desc">NFT Tickets · Marketplace · DAO · Multi-chain</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+  10 · CONCLUSION
+══════════════════════════════════════════════ -->
+<section data-background-color="#080d08">
+  <div class="full" style="position:relative; overflow:hidden;">
+
+    <!-- Glow bg -->
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 70% 50%, rgba(5,150,105,0.08) 0%, transparent 70%);pointer-events:none;"></div>
+
+    <div class="eyebrow">Merci</div>
+
+    <h1 class="big" style="margin-bottom:16px; max-width:700px; line-height:1.05;">
+      Des dons <span class="grad">transparents</span>,<br/>traçables et récompensés.
+    </h1>
+    <p class="sub" style="margin-bottom:44px;">
+      DonNation modernise le secteur associatif avec la blockchain — open-source, auto-hébergeable, prêt à l'emploi.
+    </p>
+
+    <div class="g3" style="margin-bottom:40px;">
+      <div class="card-dark fragment fade-up" style="text-align:center;">
+        <div style="font-size:1.6rem; margin-bottom:10px;">💸</div>
+        <div style="font-size:0.6rem; font-weight:700; margin-bottom:4px;">Dons traçables</div>
+        <div style="font-size:0.5rem; color:var(--muted);">Hash on-chain pour chaque transaction</div>
+      </div>
+      <div class="card-dark fragment fade-up" style="text-align:center;">
+        <div style="font-size:1.6rem; margin-bottom:10px;">📄</div>
+        <div style="font-size:0.6rem; font-weight:700; margin-bottom:4px;">Reçus automatiques</div>
+        <div style="font-size:0.5rem; color:var(--muted);">PDF + preuve blockchain en 0 clic</div>
+      </div>
+      <div class="card-dark fragment fade-up" style="text-align:center;">
+        <div style="font-size:1.6rem; margin-bottom:10px;">🎖️</div>
+        <div style="font-size:0.6rem; font-weight:700; margin-bottom:4px;">NFT de fidélité</div>
+        <div style="font-size:0.5rem; color:var(--muted);">Récompenser chaque donateur</div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:28px;" class="fragment fade-up">
+      <div>
+        <div style="font-size:0.48rem; color:var(--muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.1em;">🔗 GitHub</div>
+        <div style="font-size:0.7rem; font-weight:600; color:rgba(255,255,255,0.9);">github.com/aymenbentalha/DonNation</div>
+      </div>
+      <div style="width:1px; height:48px; background:rgba(255,255,255,0.12);"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="pill">NestJS</span>
+        <span class="pill-blue pill">Next.js</span>
+        <span class="pill-white pill">Solidity</span>
+        <span class="pill-white pill">Stripe</span>
+        <span class="pill-white pill">Docker</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+  // Detect print mode → show all fragments, remove Reveal layout
+  const isPrint = window.location.search.includes('print');
+
+  if (!isPrint) {
+    Reveal.initialize({
+      hash: true,
+      slideNumber: 'c/t',
+      transition: 'slide',
+      transitionSpeed: 'fast',
+      backgroundTransition: 'fade',
+      width: 1280,
+      height: 720,
+      margin: 0,
+      minScale: 0.2,
+      maxScale: 2,
+      controls: true,
+      progress: true,
+      center: false,
+      plugins: [RevealNotes],
+    });
+  } else {
+    // Print mode : bypass Reveal, show everything flat
+    document.querySelectorAll('.fragment').forEach(el => {
+      el.classList.add('visible');
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    });
+  }
+</script>
+</body>
+</html>

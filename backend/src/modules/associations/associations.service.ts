@@ -265,6 +265,24 @@ export class AssociationsService {
       throw new NotFoundException('Association not found for this account');
     }
 
+    // Sync Stripe status from API (webhooks often missing in local Docker)
+    if (association.stripeConnectAccountId) {
+      try {
+        const status = await this.stripeService.syncConnectAccountStatus(
+          association.stripeConnectAccountId,
+          association.id,
+        );
+        association.stripeOnboardingComplete = status.stripeOnboardingComplete;
+        association.stripeCryptoPaymentsActive =
+          status.stripeCryptoPaymentsActive;
+      } catch (error) {
+        this.logger.warn(
+          `Could not sync Stripe status for association ${association.id}`,
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+
     return {
       ...this.toPublicAssociation(association),
       owner: this.toPublicUser(association.owner),
@@ -502,7 +520,8 @@ export class AssociationsService {
   private getPublicBaseUrl(): string {
     return (
       this.config.get<string>('BACKEND_PUBLIC_URL') ??
-      `http://localhost:${this.config.get<number>('PORT', 3000)}`
+      this.config.get<string>('BACKEND_URL') ??
+      `http://localhost:3001`
     );
   }
 

@@ -5,8 +5,12 @@
 #   cp frontend/.env.local.example frontend/.env.local
 #   docker compose -f docker-compose.dev.yml up --build
 #
-# Plan B (recommandé pour Stripe CLI + déploiement contrats) :
-#   Voir README.md § « Démarrage manuel »
+# Plan B (Stripe CLI manuel) :
+#   stripe listen --forward-to http://localhost:3001/api/v1/payments/stripe/webhook
+#
+# Stripe CLI est inclus ci-dessous (service stripe-cli).
+# Au premier démarrage, copie le whsec_ affiché dans les logs vers backend/.env :
+#   docker compose -f docker-compose.dev.yml logs stripe-cli | grep whsec
 
 services:
   postgres:
@@ -31,11 +35,18 @@ services:
     entrypoint: ['anvil', '--host', '0.0.0.0', '--port', '8545']
     ports:
       - '8545:8545'
+    healthcheck:
+      test: ['CMD-SHELL', 'cast block-number --rpc-url http://127.0.0.1:8545 || exit 1']
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 2s
 
   deploy-contracts:
     image: ghcr.io/foundry-rs/foundry:latest
     depends_on:
-      - anvil
+      anvil:
+        condition: service_healthy
     volumes:
       - ./smart-contracts:/app
     working_dir: /app
@@ -45,12 +56,17 @@ services:
     command:
       - -c
       - |
-        sleep 3
+        set -e
+        forge build
         forge script script/DonNationProtocol.s.sol:DonNationProtocolScript \
           --rpc-url http://anvil:8545 \
-          --private-key 0xac0974bec39a17e36ba4a6a6410927071163121544f7a65394fc3e2e8f4e8e \
+          --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
           --broadcast
-        echo "Contrats déployés — copiez DON_NATION_PROTOCOL_ADDRESS depuis les logs forge"
+        echo ""
+        echo "=========================================="
+        echo " DonNationProtocol = 0x5FbDB2315678afecb367f032d93F642f64180aa3"
+        echo " (adresse déterministe Anvil compte #0)"
+        echo "=========================================="
     restart: 'no'
 
   backend:
@@ -64,14 +80,25 @@ services:
     environment:
       DATABASE_URL: postgresql://donnation:donnation@postgres:5432/donnation
       PORT: '3000'
+      # Blockchain locale (Anvil) — mint NFT + preuve on-chain
       BASE_SEPOLIA_RPC_URL: http://anvil:8545
+      CHAIN_ID: '31337'
+      BLOCKCHAIN_PRIVATE_KEY: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+      DON_NATION_PROTOCOL_ADDRESS: '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+      BLOCKCHAIN_CUSTODIAL_WALLET: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
       APP_URL: http://localhost:3000
+      BACKEND_URL: http://localhost:3001
+      BACKEND_PUBLIC_URL: http://localhost:3001
       CORS_ORIGIN: http://localhost:3000
     depends_on:
       postgres:
         condition: service_healthy
+      anvil:
+        condition: service_healthy
+      deploy-contracts:
+        condition: service_completed_successfully
     command: >
-      sh -c "npx prisma migrate deploy && npx prisma db seed && node dist/main.js"
+      sh -c "npx --yes prisma@6 db push --accept-data-loss && node dist-seed/seed.js && node dist/main.js"
     volumes:
       - ./backend/uploads:/app/uploads
 
@@ -81,13 +108,32 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
-        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+        # Clé publique Stripe — définie dans le .env racine (chargé auto par Compose)
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
     ports:
       - '3000:3000'
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
     depends_on:
       - backend
+
+  # Forward Stripe webhooks → backend (remplace "stripe listen" manuel)
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    env_file:
+      - ./backend/.env
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Stripe CLI — forward webhooks vers backend..."
+        echo "Copie le whsec_ affiché ci-dessous dans backend/.env (STRIPE_WEBHOOK_SECRET) si les paiements restent PENDING."
+        exec stripe listen --api-key "$$STRIPE_SECRET_KEY" --forward-to http://backend:3000/api/v1/payments/stripe/webhook --events payment_intent.succeeded,account.updated
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
 
 volumes:
   donnation_postgres_data:
